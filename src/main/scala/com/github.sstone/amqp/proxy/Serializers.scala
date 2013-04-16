@@ -13,7 +13,7 @@ object Serializers {
     "snappy-protobuf" -> SnappyProtobufSerializer,
     "snappy-thrift" -> SnappyThriftSerializer)
 
-  def nameToSerializer(name: String) = map.get(name).get
+  def nameToSerializer(name: String) = map.getOrElse(name, JsonSerializer).get
 
   def serializerToName(serializer: Serializer) = map.map(_.swap).get(serializer).get
 }
