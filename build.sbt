@@ -4,7 +4,7 @@ version := "1.4-SNAPSHOT"
 
 organization := "com.github.sstone"
 
-scalaVersion := "2.10.3"
+scalaVersion := "2.11.2"
 
 crossScalaVersions  := Seq("2.10.3","2.11.2")
 
