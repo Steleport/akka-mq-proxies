@@ -15,13 +15,13 @@ import concurrent.duration._
 import concurrent.{Future, Await, ExecutionContext}
 import java.util.concurrent.TimeUnit
 import org.junit.runner.RunWith
-import org.scalatest.WordSpec
+import org.scalatest.WordSpecLike
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.matchers.ShouldMatchers
 import serializers.ProtobufSerializer
 
 @RunWith(classOf[JUnitRunner])
-class RemoteGpbCallTest extends TestKit(ActorSystem("TestSystem")) with ImplicitSender with WordSpec with ShouldMatchers {
+class RemoteGpbCallTest extends TestKit(ActorSystem("TestSystem")) with ImplicitSender with WordSpecLike with ShouldMatchers {
   "AMQP Proxy" should {
     "handle GPB calls" in {
       import ExecutionContext.Implicits.global

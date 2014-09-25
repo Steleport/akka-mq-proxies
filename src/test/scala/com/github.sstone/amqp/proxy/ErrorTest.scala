@@ -2,12 +2,12 @@ package com.github.sstone.amqp.proxy
 
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
-import org.scalatest.WordSpec
+import org.scalatest.WordSpecLike
 import org.scalatest.matchers.ShouldMatchers
 import akka.testkit.{ImplicitSender, TestKit}
 import akka.actor.{Actor, Props, ActorSystem}
 import akka.pattern.{AskTimeoutException, ask}
-import concurrent.Await
+import concurrent.{Await, ExecutionContext}
 import concurrent.duration._
 import com.rabbitmq.client.ConnectionFactory
 import com.github.sstone.amqp.{Amqp, RpcClient, RpcServer, ConnectionOwner}
@@ -20,18 +20,21 @@ import com.github.sstone.amqp.Amqp.AddBinding
 import com.github.sstone.amqp.Amqp.QueueParameters
 import java.util.concurrent.TimeUnit
 
+
 object ErrorTest {
   case class ErrorRequest(foo: String)
 }
 
 @RunWith(classOf[JUnitRunner])
-class ErrorTest extends TestKit(ActorSystem("TestSystem")) with ImplicitSender with WordSpec with ShouldMatchers {
+class ErrorTest extends TestKit(ActorSystem("TestSystem")) with ImplicitSender with WordSpecLike with ShouldMatchers {
   import ErrorTest.ErrorRequest
   implicit val timeout: akka.util.Timeout = 5 seconds
 
   "AMQP Proxy" should {
 
     "handle server errors in" in {
+      import ExecutionContext.Implicits.global
+
       pending
       val connFactory = new ConnectionFactory()
       val conn = system.actorOf(Props(new ConnectionOwner(connFactory)), name = "conn")
@@ -76,6 +79,8 @@ class ErrorTest extends TestKit(ActorSystem("TestSystem")) with ImplicitSender w
     }
 
     "handle server-side timeouts" in {
+      import ExecutionContext.Implicits.global
+      
       val connFactory = new ConnectionFactory()
       val conn = system.actorOf(Props(new ConnectionOwner(connFactory)))
 
