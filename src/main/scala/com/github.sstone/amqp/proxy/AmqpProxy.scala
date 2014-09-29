@@ -136,12 +136,17 @@ object AmqpProxy {
           case Success((body, props)) => {
             // publish the serialized message (and tell the RPC client that we expect one response)
             val publish = Publish(exchange, routingKey, body, Some(props), mandatory = mandatory, immediate = immediate)
-            val future = (client ? RpcClient.Request(publish :: Nil, 1))(timeout).mapTo[RpcClient.Response].map(result => {
-              val delivery = result.deliveries(0)
-              val (response, serializer) = deserialize(delivery.body, delivery.properties)
+            val future = (client ? RpcClient.Request(publish :: Nil, 1))(timeout).mapTo[AnyRef].map(response => {
               response match {
-                case ServerFailure(message, throwableAsString) => akka.actor.Status.Failure(new AmqpProxyException(message, throwableAsString))
-                case _ => response
+                case result : RpcClient.Response => {
+                  val delivery = result.deliveries(0)
+                  val (response, serializer) = deserialize(delivery.body, delivery.properties)
+                  response match {
+                    case ServerFailure(message, throwableAsString) => akka.actor.Status.Failure(new AmqpProxyException(message, throwableAsString))
+                    case _ => response
+                  }
+                }
+                case undelivered : RpcClient.Undelivered => undelivered
               }
             })
             future.pipeTo(sender)
