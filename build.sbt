@@ -12,6 +12,7 @@ crossScalaVersions  := Seq("2.10.3","2.11.2")
 libraryDependencies ++= Seq(
 	"com.typesafe.akka" %% "akka-actor" % "2.3.6",
 	"org.json4s" %% "json4s-jackson" %  "3.2.10",
+	"org.json4s" %% "json4s-ext" %  "3.2.10",
 	"com.github.sstone" %% "amqp-client" % "1.4",
 	 "ch.qos.logback" % "logback-classic" % "1.0.9",
 	 "com.google.protobuf" % "protobuf-java" % "2.4.1",
