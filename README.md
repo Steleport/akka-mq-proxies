@@ -46,7 +46,7 @@ are synced to Maven Central
 * version 1.1 (master branch) is compatible with Scala 2.9.2 and Akka 2.0.5
 * version 1.1 (scala2.10 branch) is compatible with Scala 2.10 and Akka 2.1.0
 * version 1.3 (scala2.10 branch) is compatible with Scala 2.10.X and Akka 2.1.X
-* version 1.4 (scala2.10 branch) targets Scala 2.10.X and Akka 2.2.X
+* version 1.4 (scala2.11 branch) targets Scala 2.10, Scala 2.11 and Akka 2.3.X
 
 ## Calculator demo
 

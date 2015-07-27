@@ -14,7 +14,7 @@ import concurrent.duration._
 import concurrent.{Await, Future, ExecutionContext}
 import java.util.concurrent.TimeUnit
 import org.junit.runner.RunWith
-import org.scalatest.WordSpec
+import org.scalatest.WordSpecLike
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.matchers.ShouldMatchers
 import serializers.JsonSerializer
@@ -25,7 +25,7 @@ object RemoteJsonCallTest {
 }
 
 @RunWith(classOf[JUnitRunner])
-class RemoteJsonCallTest extends TestKit(ActorSystem("TestSystem")) with ImplicitSender with WordSpec with ShouldMatchers {
+class RemoteJsonCallTest extends TestKit(ActorSystem("TestSystem")) with ImplicitSender with WordSpecLike with ShouldMatchers {
 
   import RemoteJsonCallTest._
 

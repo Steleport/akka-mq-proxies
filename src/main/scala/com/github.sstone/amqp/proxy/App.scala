@@ -11,6 +11,7 @@ import com.github.sstone.amqp.Amqp.{ChannelParameters, QueueParameters, Exchange
 import serializers.JsonSerializer
 import util.{Failure, Success}
 import concurrent.ExecutionContext
+import ExecutionContext.Implicits.global
 
 object Demo {
 

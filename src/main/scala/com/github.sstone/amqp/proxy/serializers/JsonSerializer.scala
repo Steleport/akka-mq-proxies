@@ -6,7 +6,7 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization
 
 object JsonSerializer extends Serializer {
-  implicit val formats = Serialization.formats(NoTypeHints)
+  implicit val formats = org.json4s.DefaultFormats ++ org.json4s.ext.JodaTimeSerializers.all
 
   def identifier = 123456789
 
