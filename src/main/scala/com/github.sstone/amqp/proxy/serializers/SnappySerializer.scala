@@ -9,11 +9,13 @@ import akka.serialization.Serializer
  */
 abstract class SnappySerializer(serializer: Serializer) extends Serializer {
 
-  def identifier = 4
+  // scalastyle:off magic.number
+  def identifier: Int = 4
+  // scalastyle:on magic.number
 
-  def includeManifest = true
+  def includeManifest: Boolean = true
 
-  def toBinary(o: AnyRef) = {
+  def toBinary(o: AnyRef): Array[Byte] = {
     val bytes = serializer.toBinary(o)
     val zipped = Snappy.compress(bytes)
     zipped

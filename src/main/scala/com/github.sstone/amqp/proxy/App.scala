@@ -20,7 +20,7 @@ object Demo {
   case class AddResponse(x: Int, y: Int, sum: Int)
 
   class Calculator extends Actor {
-    def receive = {
+    def receive: Actor.Receive = {
       case AddRequest(x, y) => sender ! AddResponse(x, y, x + y)
     }
   }
@@ -82,7 +82,9 @@ object Client {
 object Local {
   def main(args: Array[String]) {
     val system = ActorSystem("MySystem")
+    // scalastyle:off magic.number
     val calc = system.actorOf(Props[Calculator].withRouter(SmallestMailboxRouter(nrOfInstances = 8)))
+    // scalastyle:on magic.number
     Client.compute(calc)
   }
 }

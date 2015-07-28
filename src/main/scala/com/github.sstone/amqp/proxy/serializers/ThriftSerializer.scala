@@ -7,7 +7,7 @@ import akka.serialization.Serializer
 object ThriftSerializer extends Serializer {
 
   def includeManifest: Boolean = true
-  def identifier = 3
+  def identifier: Int = 3
 
   val serializer = new TSerializer()
   val deserializer = new TDeserializer()

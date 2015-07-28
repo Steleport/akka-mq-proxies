@@ -8,11 +8,13 @@ import org.json4s.jackson.Serialization
 object JsonSerializer extends Serializer {
   implicit val formats = org.json4s.DefaultFormats ++ org.json4s.ext.JodaTimeSerializers.all
 
-  def identifier = 123456789
+  // scalastyle:off magic.number
+  def identifier: Int = 123456789
+  // scalastyle:on magic.number
 
-  def includeManifest = true
+  def includeManifest: Boolean = true
 
-  def toBinary(o: AnyRef) = Serialization.write(o).getBytes("UTF-8")
+  def toBinary(o: AnyRef): Array[Byte] = Serialization.write(o).getBytes("UTF-8")
 
   def fromBinary(bytes: Array[Byte], manifest: Option[Class[_]]): AnyRef = {
     require(manifest.isDefined)
