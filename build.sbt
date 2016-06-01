@@ -4,9 +4,9 @@ version := "1.4-SNAPSHOT"
 
 organization := "com.github.sstone"
 
-scalaVersion := "2.11.2"
+scalaVersion := "2.11.7"
 
-crossScalaVersions  := Seq("2.10.3","2.11.2")
+crossScalaVersions  := Seq("2.10.3","2.11.7")
 
 
 libraryDependencies ++= Seq(
