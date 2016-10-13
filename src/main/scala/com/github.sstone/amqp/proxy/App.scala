@@ -3,12 +3,14 @@ package com.github.sstone.amqp.proxy
 import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
+
 import scala.concurrent.duration._
 import com.rabbitmq.client.ConnectionFactory
-import akka.routing.SmallestMailboxRouter
-import com.github.sstone.amqp.{Amqp, RpcClient, RpcServer, ConnectionOwner}
-import com.github.sstone.amqp.Amqp.{ChannelParameters, QueueParameters, ExchangeParameters}
+import akka.routing.RoundRobinPool
+import com.github.sstone.amqp.{Amqp, ConnectionOwner, RpcClient, RpcServer}
+import com.github.sstone.amqp.Amqp.{ChannelParameters, ExchangeParameters, QueueParameters}
 import serializers.JsonSerializer
+
 import util.{Failure, Success}
 import concurrent.ExecutionContext
 import ExecutionContext.Implicits.global
@@ -83,7 +85,7 @@ object Local {
   def main(args: Array[String]) {
     val system = ActorSystem("MySystem")
     // scalastyle:off magic.number
-    val calc = system.actorOf(Props[Calculator].withRouter(SmallestMailboxRouter(nrOfInstances = 8)))
+    val calc = system.actorOf(Props[Calculator].withRouter(RoundRobinPool(8)))
     // scalastyle:on magic.number
     Client.compute(calc)
   }
