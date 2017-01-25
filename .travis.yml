@@ -1,6 +1,6 @@
 language: scala
 before_install:
-  - git clone git@github.com:Spacelift/amqp-scala-client.git ~/builds/amqp-scala-client
+  - git clone https://github.com/Spacelift/amqp-scala-client.git ~/builds/amqp-scala-client
   - pushd ~/builds/amqp-scala-client
   - sbt publish-local
   - popd
