@@ -1,4 +1,4 @@
-package com.github.sstone.amqp.proxy.serializers
+package space.spacelift.amqp.proxy.serializers
 
 import org.apache.thrift.{TFieldIdEnum, TDeserializer, TBase, TSerializer}
 import akka.serialization.Serializer

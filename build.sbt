@@ -1,8 +1,8 @@
-name := """akka-amqp-proxies"""
+name := """akka-mq-proxies"""
 
-version := "1.5-SNAPSHOT"
+version := "2.0-SNAPSHOT"
 
-organization := "com.github.sstone"
+organization := "space.spacelift"
 
 scalaVersion := "2.12.1"
 

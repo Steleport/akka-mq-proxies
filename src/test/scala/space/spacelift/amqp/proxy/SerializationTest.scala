@@ -1,4 +1,4 @@
-package com.github.sstone.amqp.proxy
+package space.spacelift.amqp.proxy
 
 import gpbtest.Gpbtest
 import org.scalatest.junit.AssertionsForJUnit

@@ -1,4 +1,4 @@
-package com.github.sstone.amqp.proxy
+package space.spacelift.amqp.proxy
 
 import akka.actor._
 import akka.pattern.ask

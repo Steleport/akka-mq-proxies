@@ -1,4 +1,4 @@
-package com.github.sstone.amqp.proxy.serializers
+package space.spacelift.amqp.proxy.serializers
 
 import org.xerial.snappy.Snappy
 import akka.serialization.Serializer

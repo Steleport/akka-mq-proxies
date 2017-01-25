@@ -1,4 +1,4 @@
-package com.github.sstone.amqp.proxy.serializers
+package space.spacelift.amqp.proxy.serializers
 
 import akka.serialization.Serializer
 import com.google.protobuf.Message

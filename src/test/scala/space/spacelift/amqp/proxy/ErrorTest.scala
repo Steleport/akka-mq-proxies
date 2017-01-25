@@ -1,9 +1,9 @@
-package com.github.sstone.amqp.proxy
+package space.spacelift.amqp.proxy
 
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 import org.scalatest.WordSpecLike
-import org.scalatest.matchers.ShouldMatchers
+import org.scalatest.Matchers
 import akka.testkit.{ImplicitSender, TestKit}
 import akka.actor.{Actor, Props, ActorSystem}
 import akka.pattern.{AskTimeoutException, ask}
@@ -26,7 +26,7 @@ object ErrorTest {
 }
 
 @RunWith(classOf[JUnitRunner])
-class ErrorTest extends TestKit(ActorSystem("TestSystem")) with ImplicitSender with WordSpecLike with ShouldMatchers {
+class ErrorTest extends TestKit(ActorSystem("TestSystem")) with ImplicitSender with WordSpecLike with Matchers {
   import ErrorTest.ErrorRequest
   implicit val timeout: akka.util.Timeout = 5 seconds
 
@@ -62,7 +62,7 @@ class ErrorTest extends TestKit(ActorSystem("TestSystem")) with ImplicitSender w
 
       Amqp.waitForConnection(system, server).await()
 
-      val thrown = evaluating(Await.result(proxy ? ErrorRequest("test"), 5 seconds)) should produce[AmqpProxyException]
+      val thrown = the [AmqpProxyException] thrownBy (Await.result(proxy ? ErrorRequest("test"), 5 seconds))
       thrown.getMessage should be("crash")
     }
 
@@ -74,7 +74,7 @@ class ErrorTest extends TestKit(ActorSystem("TestSystem")) with ImplicitSender w
       val proxy = system.actorOf(AmqpProxy.ProxyClient.props(client, "amq.direct", "client_side_error", JsonSerializer))
 
       val badrequest = Map(1 -> 1) // lift-json will not serialize this, Map keys must be Strings
-      val thrown = evaluating(Await.result(proxy ? badrequest, 5 seconds)) should produce[AmqpProxyException]
+      val thrown = the [AmqpProxyException] thrownBy (Await.result(proxy ? badrequest, 5 seconds))
       thrown.getMessage should include("Serialization")
     }
 
@@ -103,7 +103,7 @@ class ErrorTest extends TestKit(ActorSystem("TestSystem")) with ImplicitSender w
       val proxy = system.actorOf(AmqpProxy.ProxyClient.props(client, "amq.direct", "donothing", JsonSerializer, timeout = 2 seconds))
 
       Amqp.waitForConnection(system, server, client).await()
-      evaluating(Await.result(proxy ? "test", 5 seconds)) should produce[AskTimeoutException]
+      the [AskTimeoutException] thrownBy Await.result(proxy ? "test", 5 seconds)
     }
   }
 }
