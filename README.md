@@ -1,5 +1,7 @@
 # Akka MQ Proxies
 
+[![Build Status](https://travis-ci.org/Spacelift/akka-mq-proxies.svg?branch=develop)](https://travis-ci.org/Spacelift/akka-mq-proxies)
+
 This readme will be updated as development continues. This has a historical lineage from sstone/akka-amqp-proxies, but has been fully severed from its parent due to major breaking changes.
 
 ## Overview
