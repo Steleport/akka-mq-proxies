@@ -1,4 +1,6 @@
-# Akka AMQP Proxies
+# Akka MQ Proxies
+
+This readme will be updated as development continues. This has a historical lineage from sstone/akka-amqp-proxies, but has been fully severed from its parent due to major breaking changes.
 
 ## Overview
 
