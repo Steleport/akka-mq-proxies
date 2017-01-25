@@ -11,9 +11,9 @@ import com.rabbitmq.client.AMQP.BasicProperties
 import com.rabbitmq.client.AMQP
 import org.slf4j.LoggerFactory
 import serializers.JsonSerializer
-import com.github.sstone.amqp.{Amqp, RpcClient, RpcServer}
-import com.github.sstone.amqp.RpcServer.ProcessResult
-import com.github.sstone.amqp.Amqp.{Publish, Delivery}
+import space.spacelift.amqp.{Amqp, RpcClient, RpcServer, IProcessor}
+import space.spacelift.amqp.ProcessResult
+import space.spacelift.amqp.Amqp.{Publish, Delivery}
 
 /**
  * Thrown when an error occurred on the "server" side and was sent back to the client
@@ -66,7 +66,7 @@ object AmqpProxy {
    * @param body serialized message
    * @param props AMQP properties, which contain meta-data for the serialized message
    * @return a (deserialized message, serializer) tuple
-   * @see [[com.github.sstone.amqp.proxy.AmqpProxy.serialize( )]]
+   * @see [[space.spacelift.amqp.proxy.AmqpProxy.serialize( )]]
    */
   def deserialize(body: Array[Byte], props: AMQP.BasicProperties): (AnyRef, Serializer) = {
     // scalastyle:off null
@@ -79,7 +79,7 @@ object AmqpProxy {
     (serializer.fromBinary(body, Some(Class.forName(props.getContentType))), serializer)
   }
 
-  class ProxyServer(server: ActorRef, timeout: Timeout = 30 seconds) extends RpcServer.IProcessor {
+  class ProxyServer(server: ActorRef, timeout: Timeout = 30 seconds) extends IProcessor {
 
     import ExecutionContext.Implicits.global
 

@@ -4,12 +4,12 @@ import akka.actor.{Actor, Props, ActorSystem}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestKit}
 import calculator.Calculator.{AddResponse, AddRequest}
-import com.github.sstone.amqp.Amqp.Binding
-import com.github.sstone.amqp.Amqp.ChannelParameters
-import com.github.sstone.amqp.Amqp.ExchangeParameters
-import com.github.sstone.amqp.Amqp.QueueParameters
-import com.github.sstone.amqp.Amqp._
-import com.github.sstone.amqp.{Amqp, RpcClient, RpcServer, ConnectionOwner}
+import space.spacelift.amqp.Amqp.Binding
+import space.spacelift.amqp.Amqp.ChannelParameters
+import space.spacelift.amqp.Amqp.ExchangeParameters
+import space.spacelift.amqp.Amqp.QueueParameters
+import space.spacelift.amqp.Amqp._
+import space.spacelift.amqp.{Amqp, RpcClient, RpcServer, ConnectionOwner}
 import com.rabbitmq.client.ConnectionFactory
 import concurrent.duration._
 import concurrent.{Future, Await, ExecutionContext}

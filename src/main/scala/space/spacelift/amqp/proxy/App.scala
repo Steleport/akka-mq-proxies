@@ -7,8 +7,8 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import com.rabbitmq.client.ConnectionFactory
 import akka.routing.RoundRobinPool
-import com.github.sstone.amqp.{Amqp, ConnectionOwner, RpcClient, RpcServer}
-import com.github.sstone.amqp.Amqp.{ChannelParameters, ExchangeParameters, QueueParameters}
+import space.spacelift.amqp.{Amqp, ConnectionOwner, RpcClient, RpcServer}
+import space.spacelift.amqp.Amqp.{ChannelParameters, ExchangeParameters, QueueParameters}
 import serializers.JsonSerializer
 
 import util.{Failure, Success}
