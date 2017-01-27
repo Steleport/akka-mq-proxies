@@ -16,7 +16,7 @@ case class ProcessResult(value: Option[Array[Byte]], properties: Option[BasicPro
 /**
   * generic processor trait
   */
-trait IProcessor {
+trait Processor {
   /**
     * process an incoming AMQP message
     *

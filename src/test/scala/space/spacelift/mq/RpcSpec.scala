@@ -27,7 +27,7 @@ class RpcSpec extends ChannelSpec {
       val exchange = ExchangeParameters(name = "amq.direct", exchangeType = "", passive = true)
       val queue = randomQueue
       val routingKey = randomKey
-      val proc = new IProcessor() {
+      val proc = new Processor() {
         def process(delivery: Delivery) = Future {
           println("processing")
           val s = new String(delivery.body)
@@ -77,7 +77,7 @@ class RpcSpec extends ChannelSpec {
       val exchange = ExchangeParameters(name = "amq.direct", exchangeType = "", passive = true)
       val queue = randomQueue
       val routingKey = randomKey
-      val proc = new IProcessor() {
+      val proc = new Processor() {
         def process(delivery: Delivery) = Future {
           // return the same body with the same properties
           ProcessResult(Some(delivery.body), Some(delivery.properties))
@@ -117,7 +117,7 @@ class RpcSpec extends ChannelSpec {
       // empty means that a random name will be generated when the queue is declared
       val queue = QueueParameters(name = "", passive = false, exclusive = true)
       // create 2 servers, each using a broker generated private queue and their own processor
-      val proc1 = new IProcessor {
+      val proc1 = new Processor {
         def process(delivery: Delivery) = Future(ProcessResult(Some("proc1".getBytes)))
 
         def onFailure(delivery: Delivery, e: Throwable) = ProcessResult(None)
@@ -128,7 +128,7 @@ class RpcSpec extends ChannelSpec {
       server1 ! AddBinding(Binding(exchange, queue, routingKey))
       val Amqp.Ok(AddBinding(_), _) = receiveOne(1 second)
 
-      val proc2 = new IProcessor {
+      val proc2 = new Processor {
         def process(delivery: Delivery) = Future(ProcessResult(Some("proc2".getBytes)))
 
         def onFailure(delivery: Delivery, e: Throwable) = ProcessResult(None)

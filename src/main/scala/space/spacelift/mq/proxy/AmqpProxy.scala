@@ -79,7 +79,7 @@ object AmqpProxy {
     (serializer.fromBinary(body, Some(Class.forName(props.getContentType))), serializer)
   }
 
-  class ProxyServer(server: ActorRef, timeout: Timeout = 30 seconds) extends IProcessor {
+  class ProxyServer(server: ActorRef, timeout: Timeout = 30 seconds) extends Processor {
 
     import ExecutionContext.Implicits.global
 
