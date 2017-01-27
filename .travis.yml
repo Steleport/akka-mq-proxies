@@ -7,6 +7,17 @@ before_install:
 script:
   - pushd akka-mq-proxies 
   - sbt test
+  - sbt publish-local
+  - popd
+  - pushd akka-mq-proxies-amqp
+  - sbt test
+  - popd
+  - pushd akka-mq-proxies-sqs
+  - sbt test
+  - popd
+  - pushd akka-mq-proxies-zeromq
+  - sbt test
+  - popd
 scala:
   - 2.12.1
 jdk:
