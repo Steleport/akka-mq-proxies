@@ -1,4 +1,4 @@
-package space.spacelift.amqp.proxy.gpbtest;
+package space.spacelift.mq.proxy.gpbtest;
 
 message Person {
   required int32 id = 1;
