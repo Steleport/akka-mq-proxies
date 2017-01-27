@@ -4,7 +4,9 @@ before_install:
   - pushd ~/builds/amqp-scala-client
   - sbt publish-local
   - popd
-script: sbt test
+script:
+  - pushd akka-mq-proxies 
+  - sbt test
 scala:
   - 2.12.1
 jdk:
