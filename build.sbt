@@ -29,7 +29,7 @@ lazy val akkaMqProxiesAmqp = (project in file("akka-mq-proxies-amqp"))
       "space.spacelift" %% "amqp-scala-client" % "2.0.0"
     )
   )
-  .dependsOn(akkaMqProxies)
+  .dependsOn(akkaMqProxies % "compile->compile;test->test")
 
 lazy val akkaMqProxiesZeromq = (project in file("akka-mq-proxies-zeromq"))
   .settings(Commons.settings:_*)
@@ -38,7 +38,7 @@ lazy val akkaMqProxiesZeromq = (project in file("akka-mq-proxies-zeromq"))
     name := "akka-mq-proxies-zeromq",
     libraryDependencies ++= commonDependencies
   )
-  .dependsOn(akkaMqProxies)
+  .dependsOn(akkaMqProxies % "compile->compile;test->test")
 
 lazy val akkaMqProxiesSqs = (project in file("akka-mq-proxies-sqs"))
   .settings(Commons.settings:_*)
@@ -47,4 +47,4 @@ lazy val akkaMqProxiesSqs = (project in file("akka-mq-proxies-sqs"))
     name := "akka-mq-proxies-sqs",
     libraryDependencies ++= commonDependencies
   )
-  .dependsOn(akkaMqProxies)
+  .dependsOn(akkaMqProxies % "compile->compile;test->test")

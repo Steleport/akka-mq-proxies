@@ -39,12 +39,12 @@ public final class Calculator {
     
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return space.spacelift.mq.proxy.calculator.Calculator.internal_static_space_spacelift_mq_proxy_calculator_AddRequest_descriptor;
+      return Calculator.internal_static_space_spacelift_mq_proxy_calculator_AddRequest_descriptor;
     }
     
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return space.spacelift.mq.proxy.calculator.Calculator.internal_static_space_spacelift_mq_proxy_calculator_AddRequest_fieldAccessorTable;
+      return Calculator.internal_static_space_spacelift_mq_proxy_calculator_AddRequest_fieldAccessorTable;
     }
     
     private int bitField0_;
@@ -127,41 +127,41 @@ public final class Calculator {
       return super.writeReplace();
     }
     
-    public static space.spacelift.mq.proxy.calculator.Calculator.AddRequest parseFrom(
+    public static Calculator.AddRequest parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return newBuilder().mergeFrom(data).buildParsed();
     }
-    public static space.spacelift.mq.proxy.calculator.Calculator.AddRequest parseFrom(
+    public static Calculator.AddRequest parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return newBuilder().mergeFrom(data, extensionRegistry)
                .buildParsed();
     }
-    public static space.spacelift.mq.proxy.calculator.Calculator.AddRequest parseFrom(byte[] data)
+    public static Calculator.AddRequest parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return newBuilder().mergeFrom(data).buildParsed();
     }
-    public static space.spacelift.mq.proxy.calculator.Calculator.AddRequest parseFrom(
+    public static Calculator.AddRequest parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return newBuilder().mergeFrom(data, extensionRegistry)
                .buildParsed();
     }
-    public static space.spacelift.mq.proxy.calculator.Calculator.AddRequest parseFrom(java.io.InputStream input)
+    public static Calculator.AddRequest parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return newBuilder().mergeFrom(input).buildParsed();
     }
-    public static space.spacelift.mq.proxy.calculator.Calculator.AddRequest parseFrom(
+    public static Calculator.AddRequest parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return newBuilder().mergeFrom(input, extensionRegistry)
                .buildParsed();
     }
-    public static space.spacelift.mq.proxy.calculator.Calculator.AddRequest parseDelimitedFrom(java.io.InputStream input)
+    public static Calculator.AddRequest parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       Builder builder = newBuilder();
       if (builder.mergeDelimitedFrom(input)) {
@@ -170,7 +170,7 @@ public final class Calculator {
         return null;
       }
     }
-    public static space.spacelift.mq.proxy.calculator.Calculator.AddRequest parseDelimitedFrom(
+    public static Calculator.AddRequest parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -181,12 +181,12 @@ public final class Calculator {
         return null;
       }
     }
-    public static space.spacelift.mq.proxy.calculator.Calculator.AddRequest parseFrom(
+    public static Calculator.AddRequest parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return newBuilder().mergeFrom(input).buildParsed();
     }
-    public static space.spacelift.mq.proxy.calculator.Calculator.AddRequest parseFrom(
+    public static Calculator.AddRequest parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -196,7 +196,7 @@ public final class Calculator {
     
     public static Builder newBuilder() { return Builder.create(); }
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(space.spacelift.mq.proxy.calculator.Calculator.AddRequest prototype) {
+    public static Builder newBuilder(Calculator.AddRequest prototype) {
       return newBuilder().mergeFrom(prototype);
     }
     public Builder toBuilder() { return newBuilder(this); }
@@ -209,18 +209,18 @@ public final class Calculator {
     }
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements space.spacelift.mq.proxy.calculator.Calculator.AddRequestOrBuilder {
+       implements Calculator.AddRequestOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return space.spacelift.mq.proxy.calculator.Calculator.internal_static_space_spacelift_mq_proxy_calculator_AddRequest_descriptor;
+        return Calculator.internal_static_space_spacelift_mq_proxy_calculator_AddRequest_descriptor;
       }
       
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return space.spacelift.mq.proxy.calculator.Calculator.internal_static_space_spacelift_mq_proxy_calculator_AddRequest_fieldAccessorTable;
+        return Calculator.internal_static_space_spacelift_mq_proxy_calculator_AddRequest_fieldAccessorTable;
       }
       
-      // Construct using space.spacelift.mq.proxy.calculator.Calculator.AddRequest.newBuilder()
+      // Construct using Calculator.AddRequest.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -252,24 +252,24 @@ public final class Calculator {
       
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return space.spacelift.mq.proxy.calculator.Calculator.AddRequest.getDescriptor();
+        return Calculator.AddRequest.getDescriptor();
       }
       
-      public space.spacelift.mq.proxy.calculator.Calculator.AddRequest getDefaultInstanceForType() {
-        return space.spacelift.mq.proxy.calculator.Calculator.AddRequest.getDefaultInstance();
+      public Calculator.AddRequest getDefaultInstanceForType() {
+        return Calculator.AddRequest.getDefaultInstance();
       }
       
-      public space.spacelift.mq.proxy.calculator.Calculator.AddRequest build() {
-        space.spacelift.mq.proxy.calculator.Calculator.AddRequest result = buildPartial();
+      public Calculator.AddRequest build() {
+        Calculator.AddRequest result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
         return result;
       }
       
-      private space.spacelift.mq.proxy.calculator.Calculator.AddRequest buildParsed()
+      private Calculator.AddRequest buildParsed()
           throws com.google.protobuf.InvalidProtocolBufferException {
-        space.spacelift.mq.proxy.calculator.Calculator.AddRequest result = buildPartial();
+        Calculator.AddRequest result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(
             result).asInvalidProtocolBufferException();
@@ -277,8 +277,8 @@ public final class Calculator {
         return result;
       }
       
-      public space.spacelift.mq.proxy.calculator.Calculator.AddRequest buildPartial() {
-        space.spacelift.mq.proxy.calculator.Calculator.AddRequest result = new space.spacelift.mq.proxy.calculator.Calculator.AddRequest(this);
+      public Calculator.AddRequest buildPartial() {
+        Calculator.AddRequest result = new Calculator.AddRequest(this);
         int from_bitField0_ = bitField0_;
         int to_bitField0_ = 0;
         if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
@@ -295,16 +295,16 @@ public final class Calculator {
       }
       
       public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof space.spacelift.mq.proxy.calculator.Calculator.AddRequest) {
-          return mergeFrom((space.spacelift.mq.proxy.calculator.Calculator.AddRequest)other);
+        if (other instanceof Calculator.AddRequest) {
+          return mergeFrom((Calculator.AddRequest)other);
         } else {
           super.mergeFrom(other);
           return this;
         }
       }
       
-      public Builder mergeFrom(space.spacelift.mq.proxy.calculator.Calculator.AddRequest other) {
-        if (other == space.spacelift.mq.proxy.calculator.Calculator.AddRequest.getDefaultInstance()) return this;
+      public Builder mergeFrom(Calculator.AddRequest other) {
+        if (other == Calculator.AddRequest.getDefaultInstance()) return this;
         if (other.hasX()) {
           setX(other.getX());
         }
@@ -454,12 +454,12 @@ public final class Calculator {
     
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return space.spacelift.mq.proxy.calculator.Calculator.internal_static_space_spacelift_mq_proxy_calculator_AddResponse_descriptor;
+      return Calculator.internal_static_space_spacelift_mq_proxy_calculator_AddResponse_descriptor;
     }
     
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return space.spacelift.mq.proxy.calculator.Calculator.internal_static_space_spacelift_mq_proxy_calculator_AddResponse_fieldAccessorTable;
+      return Calculator.internal_static_space_spacelift_mq_proxy_calculator_AddResponse_fieldAccessorTable;
     }
     
     private int bitField0_;
@@ -564,41 +564,41 @@ public final class Calculator {
       return super.writeReplace();
     }
     
-    public static space.spacelift.mq.proxy.calculator.Calculator.AddResponse parseFrom(
+    public static Calculator.AddResponse parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return newBuilder().mergeFrom(data).buildParsed();
     }
-    public static space.spacelift.mq.proxy.calculator.Calculator.AddResponse parseFrom(
+    public static Calculator.AddResponse parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return newBuilder().mergeFrom(data, extensionRegistry)
                .buildParsed();
     }
-    public static space.spacelift.mq.proxy.calculator.Calculator.AddResponse parseFrom(byte[] data)
+    public static Calculator.AddResponse parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return newBuilder().mergeFrom(data).buildParsed();
     }
-    public static space.spacelift.mq.proxy.calculator.Calculator.AddResponse parseFrom(
+    public static Calculator.AddResponse parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return newBuilder().mergeFrom(data, extensionRegistry)
                .buildParsed();
     }
-    public static space.spacelift.mq.proxy.calculator.Calculator.AddResponse parseFrom(java.io.InputStream input)
+    public static Calculator.AddResponse parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return newBuilder().mergeFrom(input).buildParsed();
     }
-    public static space.spacelift.mq.proxy.calculator.Calculator.AddResponse parseFrom(
+    public static Calculator.AddResponse parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return newBuilder().mergeFrom(input, extensionRegistry)
                .buildParsed();
     }
-    public static space.spacelift.mq.proxy.calculator.Calculator.AddResponse parseDelimitedFrom(java.io.InputStream input)
+    public static Calculator.AddResponse parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       Builder builder = newBuilder();
       if (builder.mergeDelimitedFrom(input)) {
@@ -607,7 +607,7 @@ public final class Calculator {
         return null;
       }
     }
-    public static space.spacelift.mq.proxy.calculator.Calculator.AddResponse parseDelimitedFrom(
+    public static Calculator.AddResponse parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -618,12 +618,12 @@ public final class Calculator {
         return null;
       }
     }
-    public static space.spacelift.mq.proxy.calculator.Calculator.AddResponse parseFrom(
+    public static Calculator.AddResponse parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return newBuilder().mergeFrom(input).buildParsed();
     }
-    public static space.spacelift.mq.proxy.calculator.Calculator.AddResponse parseFrom(
+    public static Calculator.AddResponse parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -633,7 +633,7 @@ public final class Calculator {
     
     public static Builder newBuilder() { return Builder.create(); }
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(space.spacelift.mq.proxy.calculator.Calculator.AddResponse prototype) {
+    public static Builder newBuilder(Calculator.AddResponse prototype) {
       return newBuilder().mergeFrom(prototype);
     }
     public Builder toBuilder() { return newBuilder(this); }
@@ -646,18 +646,18 @@ public final class Calculator {
     }
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements space.spacelift.mq.proxy.calculator.Calculator.AddResponseOrBuilder {
+       implements Calculator.AddResponseOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return space.spacelift.mq.proxy.calculator.Calculator.internal_static_space_spacelift_mq_proxy_calculator_AddResponse_descriptor;
+        return Calculator.internal_static_space_spacelift_mq_proxy_calculator_AddResponse_descriptor;
       }
       
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return space.spacelift.mq.proxy.calculator.Calculator.internal_static_space_spacelift_mq_proxy_calculator_AddResponse_fieldAccessorTable;
+        return Calculator.internal_static_space_spacelift_mq_proxy_calculator_AddResponse_fieldAccessorTable;
       }
       
-      // Construct using space.spacelift.mq.proxy.calculator.Calculator.AddResponse.newBuilder()
+      // Construct using Calculator.AddResponse.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -691,24 +691,24 @@ public final class Calculator {
       
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return space.spacelift.mq.proxy.calculator.Calculator.AddResponse.getDescriptor();
+        return Calculator.AddResponse.getDescriptor();
       }
       
-      public space.spacelift.mq.proxy.calculator.Calculator.AddResponse getDefaultInstanceForType() {
-        return space.spacelift.mq.proxy.calculator.Calculator.AddResponse.getDefaultInstance();
+      public Calculator.AddResponse getDefaultInstanceForType() {
+        return Calculator.AddResponse.getDefaultInstance();
       }
       
-      public space.spacelift.mq.proxy.calculator.Calculator.AddResponse build() {
-        space.spacelift.mq.proxy.calculator.Calculator.AddResponse result = buildPartial();
+      public Calculator.AddResponse build() {
+        Calculator.AddResponse result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
         return result;
       }
       
-      private space.spacelift.mq.proxy.calculator.Calculator.AddResponse buildParsed()
+      private Calculator.AddResponse buildParsed()
           throws com.google.protobuf.InvalidProtocolBufferException {
-        space.spacelift.mq.proxy.calculator.Calculator.AddResponse result = buildPartial();
+        Calculator.AddResponse result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(
             result).asInvalidProtocolBufferException();
@@ -716,8 +716,8 @@ public final class Calculator {
         return result;
       }
       
-      public space.spacelift.mq.proxy.calculator.Calculator.AddResponse buildPartial() {
-        space.spacelift.mq.proxy.calculator.Calculator.AddResponse result = new space.spacelift.mq.proxy.calculator.Calculator.AddResponse(this);
+      public Calculator.AddResponse buildPartial() {
+        Calculator.AddResponse result = new Calculator.AddResponse(this);
         int from_bitField0_ = bitField0_;
         int to_bitField0_ = 0;
         if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
@@ -738,16 +738,16 @@ public final class Calculator {
       }
       
       public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof space.spacelift.mq.proxy.calculator.Calculator.AddResponse) {
-          return mergeFrom((space.spacelift.mq.proxy.calculator.Calculator.AddResponse)other);
+        if (other instanceof Calculator.AddResponse) {
+          return mergeFrom((Calculator.AddResponse)other);
         } else {
           super.mergeFrom(other);
           return this;
         }
       }
       
-      public Builder mergeFrom(space.spacelift.mq.proxy.calculator.Calculator.AddResponse other) {
-        if (other == space.spacelift.mq.proxy.calculator.Calculator.AddResponse.getDefaultInstance()) return this;
+      public Builder mergeFrom(Calculator.AddResponse other) {
+        if (other == Calculator.AddResponse.getDefaultInstance()) return this;
         if (other.hasX()) {
           setX(other.getX());
         }
@@ -931,16 +931,16 @@ public final class Calculator {
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_space_spacelift_mq_proxy_calculator_AddRequest_descriptor,
               new java.lang.String[] { "X", "Y", },
-              space.spacelift.mq.proxy.calculator.Calculator.AddRequest.class,
-              space.spacelift.mq.proxy.calculator.Calculator.AddRequest.Builder.class);
+              Calculator.AddRequest.class,
+              Calculator.AddRequest.Builder.class);
           internal_static_space_spacelift_mq_proxy_calculator_AddResponse_descriptor =
             getDescriptor().getMessageTypes().get(1);
           internal_static_space_spacelift_mq_proxy_calculator_AddResponse_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_space_spacelift_mq_proxy_calculator_AddResponse_descriptor,
               new java.lang.String[] { "X", "Y", "Sum", },
-              space.spacelift.mq.proxy.calculator.Calculator.AddResponse.class,
-              space.spacelift.mq.proxy.calculator.Calculator.AddResponse.Builder.class);
+              Calculator.AddResponse.class,
+              Calculator.AddResponse.Builder.class);
           return null;
         }
       };

@@ -11,6 +11,7 @@ import org.scalatest.{Matchers, WordSpecLike}
 import org.scalatest.junit.JUnitRunner
 import space.spacelift.amqp.Amqp.{Binding, ChannelParameters, ExchangeParameters, QueueParameters, _}
 import space.spacelift.amqp.{Amqp, ConnectionOwner}
+import space.spacelift.mq.proxy.calculator.Calculator
 import space.spacelift.mq.proxy.calculator.Calculator.{AddRequest, AddResponse}
 import space.spacelift.mq.proxy.serializers.ProtobufSerializer
 

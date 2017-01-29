@@ -33,11 +33,11 @@ object AmqpProxy extends Proxy {
    *         should be sent with.
    */
   def serialize(msg: AnyRef, serializer: Serializer, deliveryMode: Int = 1): (Array[Byte], AMQP.BasicProperties) = {
-    val body = serializer.toBinary(msg)
+    val (body, msgProps) = super.serialize(serializer, msg)
     val props = new BasicProperties
                   .Builder()
-                  .contentEncoding(Serializers.serializerToName(serializer))
-                  .contentType(msg.getClass.getName)
+                  .contentEncoding(msg.getClass.getName)
+                  .contentType(msgProps.contentType)
                   .deliveryMode(deliveryMode).build
     (body, props)
   }
@@ -50,14 +50,7 @@ object AmqpProxy extends Proxy {
    * @see [[AmqpProxy.serialize( )]]
    */
   def deserialize(body: Array[Byte], props: AMQP.BasicProperties): (AnyRef, Serializer) = {
-    // scalastyle:off null
-    require(props.getContentType != null && props.getContentType != "", "content type is not specified")
-    val serializer = props.getContentEncoding match {
-      case "" | null => JsonSerializer // use JSON if not serialization format was specified
-      case encoding => Serializers.nameToSerializer(encoding)
-    }
-    // scalastyle:on null
-    (serializer.fromBinary(body, Some(Class.forName(props.getContentType))), serializer)
+    super.deserialize(body, MessageProperties(props.getContentEncoding, props.getContentType))
   }
 
   class ProxyServer(server: ActorRef, timeout: Timeout = 30 seconds) extends Processor {

@@ -43,12 +43,12 @@ public final class Gpbtest {
     
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return space.spacelift.mq.proxy.gpbtest.Gpbtest.internal_static_space_spacelift_mq_proxy_gpbtest_Person_descriptor;
+      return Gpbtest.internal_static_space_spacelift_mq_proxy_gpbtest_Person_descriptor;
     }
     
     protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return space.spacelift.mq.proxy.gpbtest.Gpbtest.internal_static_space_spacelift_mq_proxy_gpbtest_Person_fieldAccessorTable;
+      return Gpbtest.internal_static_space_spacelift_mq_proxy_gpbtest_Person_fieldAccessorTable;
     }
     
     private int bitField0_;
@@ -193,41 +193,41 @@ public final class Gpbtest {
       return super.writeReplace();
     }
     
-    public static space.spacelift.mq.proxy.gpbtest.Gpbtest.Person parseFrom(
+    public static Gpbtest.Person parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return newBuilder().mergeFrom(data).buildParsed();
     }
-    public static space.spacelift.mq.proxy.gpbtest.Gpbtest.Person parseFrom(
+    public static Gpbtest.Person parseFrom(
         com.google.protobuf.ByteString data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return newBuilder().mergeFrom(data, extensionRegistry)
                .buildParsed();
     }
-    public static space.spacelift.mq.proxy.gpbtest.Gpbtest.Person parseFrom(byte[] data)
+    public static Gpbtest.Person parseFrom(byte[] data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return newBuilder().mergeFrom(data).buildParsed();
     }
-    public static space.spacelift.mq.proxy.gpbtest.Gpbtest.Person parseFrom(
+    public static Gpbtest.Person parseFrom(
         byte[] data,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return newBuilder().mergeFrom(data, extensionRegistry)
                .buildParsed();
     }
-    public static space.spacelift.mq.proxy.gpbtest.Gpbtest.Person parseFrom(java.io.InputStream input)
+    public static Gpbtest.Person parseFrom(java.io.InputStream input)
         throws java.io.IOException {
       return newBuilder().mergeFrom(input).buildParsed();
     }
-    public static space.spacelift.mq.proxy.gpbtest.Gpbtest.Person parseFrom(
+    public static Gpbtest.Person parseFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
       return newBuilder().mergeFrom(input, extensionRegistry)
                .buildParsed();
     }
-    public static space.spacelift.mq.proxy.gpbtest.Gpbtest.Person parseDelimitedFrom(java.io.InputStream input)
+    public static Gpbtest.Person parseDelimitedFrom(java.io.InputStream input)
         throws java.io.IOException {
       Builder builder = newBuilder();
       if (builder.mergeDelimitedFrom(input)) {
@@ -236,7 +236,7 @@ public final class Gpbtest {
         return null;
       }
     }
-    public static space.spacelift.mq.proxy.gpbtest.Gpbtest.Person parseDelimitedFrom(
+    public static Gpbtest.Person parseDelimitedFrom(
         java.io.InputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -247,12 +247,12 @@ public final class Gpbtest {
         return null;
       }
     }
-    public static space.spacelift.mq.proxy.gpbtest.Gpbtest.Person parseFrom(
+    public static Gpbtest.Person parseFrom(
         com.google.protobuf.CodedInputStream input)
         throws java.io.IOException {
       return newBuilder().mergeFrom(input).buildParsed();
     }
-    public static space.spacelift.mq.proxy.gpbtest.Gpbtest.Person parseFrom(
+    public static Gpbtest.Person parseFrom(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws java.io.IOException {
@@ -262,7 +262,7 @@ public final class Gpbtest {
     
     public static Builder newBuilder() { return Builder.create(); }
     public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder(space.spacelift.mq.proxy.gpbtest.Gpbtest.Person prototype) {
+    public static Builder newBuilder(Gpbtest.Person prototype) {
       return newBuilder().mergeFrom(prototype);
     }
     public Builder toBuilder() { return newBuilder(this); }
@@ -275,18 +275,18 @@ public final class Gpbtest {
     }
     public static final class Builder extends
         com.google.protobuf.GeneratedMessage.Builder<Builder>
-       implements space.spacelift.mq.proxy.gpbtest.Gpbtest.PersonOrBuilder {
+       implements Gpbtest.PersonOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return space.spacelift.mq.proxy.gpbtest.Gpbtest.internal_static_space_spacelift_mq_proxy_gpbtest_Person_descriptor;
+        return Gpbtest.internal_static_space_spacelift_mq_proxy_gpbtest_Person_descriptor;
       }
       
       protected com.google.protobuf.GeneratedMessage.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return space.spacelift.mq.proxy.gpbtest.Gpbtest.internal_static_space_spacelift_mq_proxy_gpbtest_Person_fieldAccessorTable;
+        return Gpbtest.internal_static_space_spacelift_mq_proxy_gpbtest_Person_fieldAccessorTable;
       }
       
-      // Construct using space.spacelift.mq.proxy.gpbtest.Gpbtest.Person.newBuilder()
+      // Construct using Gpbtest.Person.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -320,24 +320,24 @@ public final class Gpbtest {
       
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return space.spacelift.mq.proxy.gpbtest.Gpbtest.Person.getDescriptor();
+        return Gpbtest.Person.getDescriptor();
       }
       
-      public space.spacelift.mq.proxy.gpbtest.Gpbtest.Person getDefaultInstanceForType() {
-        return space.spacelift.mq.proxy.gpbtest.Gpbtest.Person.getDefaultInstance();
+      public Gpbtest.Person getDefaultInstanceForType() {
+        return Gpbtest.Person.getDefaultInstance();
       }
       
-      public space.spacelift.mq.proxy.gpbtest.Gpbtest.Person build() {
-        space.spacelift.mq.proxy.gpbtest.Gpbtest.Person result = buildPartial();
+      public Gpbtest.Person build() {
+        Gpbtest.Person result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(result);
         }
         return result;
       }
       
-      private space.spacelift.mq.proxy.gpbtest.Gpbtest.Person buildParsed()
+      private Gpbtest.Person buildParsed()
           throws com.google.protobuf.InvalidProtocolBufferException {
-        space.spacelift.mq.proxy.gpbtest.Gpbtest.Person result = buildPartial();
+        Gpbtest.Person result = buildPartial();
         if (!result.isInitialized()) {
           throw newUninitializedMessageException(
             result).asInvalidProtocolBufferException();
@@ -345,8 +345,8 @@ public final class Gpbtest {
         return result;
       }
       
-      public space.spacelift.mq.proxy.gpbtest.Gpbtest.Person buildPartial() {
-        space.spacelift.mq.proxy.gpbtest.Gpbtest.Person result = new space.spacelift.mq.proxy.gpbtest.Gpbtest.Person(this);
+      public Gpbtest.Person buildPartial() {
+        Gpbtest.Person result = new Gpbtest.Person(this);
         int from_bitField0_ = bitField0_;
         int to_bitField0_ = 0;
         if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
@@ -367,16 +367,16 @@ public final class Gpbtest {
       }
       
       public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof space.spacelift.mq.proxy.gpbtest.Gpbtest.Person) {
-          return mergeFrom((space.spacelift.mq.proxy.gpbtest.Gpbtest.Person)other);
+        if (other instanceof Gpbtest.Person) {
+          return mergeFrom((Gpbtest.Person)other);
         } else {
           super.mergeFrom(other);
           return this;
         }
       }
       
-      public Builder mergeFrom(space.spacelift.mq.proxy.gpbtest.Gpbtest.Person other) {
-        if (other == space.spacelift.mq.proxy.gpbtest.Gpbtest.Person.getDefaultInstance()) return this;
+      public Builder mergeFrom(Gpbtest.Person other) {
+        if (other == Gpbtest.Person.getDefaultInstance()) return this;
         if (other.hasId()) {
           setId(other.getId());
         }
@@ -580,8 +580,8 @@ public final class Gpbtest {
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_space_spacelift_mq_proxy_gpbtest_Person_descriptor,
               new java.lang.String[] { "Id", "Name", "Email", },
-              space.spacelift.mq.proxy.gpbtest.Gpbtest.Person.class,
-              space.spacelift.mq.proxy.gpbtest.Gpbtest.Person.Builder.class);
+              Gpbtest.Person.class,
+              Gpbtest.Person.Builder.class);
           return null;
         }
       };
