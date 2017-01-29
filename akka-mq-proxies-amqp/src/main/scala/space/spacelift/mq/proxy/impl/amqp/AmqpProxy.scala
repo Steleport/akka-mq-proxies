@@ -1,43 +1,24 @@
-package space.spacelift.mq.proxy
+package space.spacelift.mq.proxy.impl.amqp
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import akka.serialization.Serializer
 import akka.pattern.{ask, pipe}
+import akka.serialization.Serializer
 import akka.util.Timeout
-
-import concurrent.{Await, ExecutionContext, Future}
-import concurrent.duration._
-import util.{Failure, Success, Try}
-import com.rabbitmq.client.AMQP.BasicProperties
 import com.rabbitmq.client.AMQP
+import com.rabbitmq.client.AMQP.BasicProperties
 import org.slf4j.LoggerFactory
-import serializers.JsonSerializer
 import space.spacelift.amqp.Amqp
 import space.spacelift.amqp.Amqp.{Delivery, Publish}
+import space.spacelift.mq.proxy.serializers.JsonSerializer
+import space.spacelift.mq.proxy.{ProxyException, _}
 
-/**
- * Thrown when an error occurred on the "server" side and was sent back to the client
- * If you have a server Actor and create an AMQP proxy for it, then:
- * {{{
- *    proxy ? message
- * }}}
- * will behave as if you had written;
- * {{{
- *    server ? message
- * }}}
- * and server had sent back an `akka.actor.Status.ServerFailure(new AmqpProxyException(message)))`
- * @param message error message
- */
-class AmqpProxyException(message: String, throwableAsString: String) extends RuntimeException(message)
+import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success, Try}
 
-object AmqpProxy {
 
-  /**
-   * "server" side failure, that will be serialized and sent back to the client proxy
-   * @param message error message
-   */
-  private case class ServerFailure(message: String, throwableAsString: String)
 
+object AmqpProxy extends Proxy {
   /**
    * serialize a message and return a (blob, AMQP properties) tuple. The following convention is used for the AMQP properties
    * the message will be sent with:
@@ -66,7 +47,7 @@ object AmqpProxy {
    * @param body serialized message
    * @param props AMQP properties, which contain meta-data for the serialized message
    * @return a (deserialized message, serializer) tuple
-   * @see [[space.spacelift.mq.proxy.AmqpProxy.serialize( )]]
+   * @see [[AmqpProxy.serialize( )]]
    */
   def deserialize(body: Array[Byte], props: AMQP.BasicProperties): (AnyRef, Serializer) = {
     // scalastyle:off null
@@ -155,22 +136,22 @@ object AmqpProxy {
           case Success((body, props)) => {
             // publish the serialized message (and tell the RPC client that we expect one response)
             val publish = Publish(exchange, routingKey, body, Some(props), mandatory = mandatory, immediate = immediate)
-            val future = (client ? RpcClient.Request(publish :: Nil, 1))(timeout).mapTo[AnyRef].map(response => {
+            val future = (client ? AmqpRpcClient.Request(publish :: Nil, 1))(timeout).mapTo[AnyRef].map(response => {
               response match {
-                case result : RpcClient.Response => {
+                case result : AmqpRpcClient.Response => {
                   val delivery = result.deliveries(0)
                   val (response, serializer) = deserialize(delivery.body, delivery.properties)
                   response match {
-                    case ServerFailure(message, throwableAsString) => akka.actor.Status.Failure(new AmqpProxyException(message, throwableAsString))
+                    case ServerFailure(message, throwableAsString) => akka.actor.Status.Failure(new ProxyException(message, throwableAsString))
                     case _ => response
                   }
                 }
-                case undelivered : RpcClient.Undelivered => undelivered
+                case undelivered : AmqpRpcClient.Undelivered => undelivered
               }
             })
             future.pipeTo(sender)
           }
-          case Failure(cause) => sender ! akka.actor.Status.Failure(new AmqpProxyException("Serialization error", cause.getMessage))
+          case Failure(cause) => sender ! akka.actor.Status.Failure(new ProxyException("Serialization error", cause.getMessage))
         }
       }
     }

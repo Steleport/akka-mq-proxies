@@ -5,7 +5,7 @@ import akka.util.Timeout
 import scala.concurrent.duration._
 import com.rabbitmq.client.ConnectionFactory
 import akka.routing.RoundRobinPool
-import space.spacelift.mq.proxy.{AmqpProxy, RpcClient, RpcServer}
+import space.spacelift.mq.proxy.impl.amqp.{AmqpProxy, AmqpRpcClient$, AmqpRpcServer$}
 import space.spacelift.mq.proxy.serializers.JsonSerializer
 
 import util.{Failure, Success}
@@ -41,7 +41,7 @@ object Server {
     // them to our Calculator actor
     val server = ConnectionOwner.createChildActor(
       conn,
-      RpcServer.props(queue, exchange, "calculator", new AmqpProxy.ProxyServer(calc), channelParams),
+      AmqpRpcServer.props(queue, exchange, "calculator", new AmqpProxy.ProxyServer(calc), channelParams),
       name = Some("server"))
 
     Amqp.waitForConnection(system, server).await()
@@ -69,7 +69,7 @@ object Client {
     connFactory.setHost("localhost")
     // create a "connection owner" actor, which will try and reconnect automatically if the connection ins lost
     val conn = system.actorOf(Props(new ConnectionOwner(connFactory)), name = "conn")
-    val client = ConnectionOwner.createChildActor(conn, RpcClient.props())
+    val client = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props())
     Amqp.waitForConnection(system, client).await()
     val proxy = system.actorOf(
       AmqpProxy.ProxyClient.props(client, "amq.direct", "calculator", JsonSerializer),

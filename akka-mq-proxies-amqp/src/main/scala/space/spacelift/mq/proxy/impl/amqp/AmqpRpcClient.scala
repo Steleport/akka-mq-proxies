@@ -1,4 +1,4 @@
-package space.spacelift.mq.proxy
+package space.spacelift.mq.proxy.impl.amqp
 
 import akka.actor.{ActorRef, Props}
 import akka.event.LoggingReceive
@@ -7,7 +7,7 @@ import com.rabbitmq.client.{Channel, DefaultConsumer, Envelope}
 import space.spacelift.amqp.Amqp._
 import space.spacelift.amqp.ChannelOwner
 
-object RpcClient {
+object AmqpRpcClient {
 
   case class Request(publish: List[Publish], numberOfResponses: Int = 1)
 
@@ -19,15 +19,15 @@ object RpcClient {
 
   case class Undelivered(msg: ReturnedMessage)
 
-  def props(channelParams: Option[ChannelParameters] = None): Props = Props(new RpcClient(channelParams))
+  def props(channelParams: Option[ChannelParameters] = None): Props = Props(new AmqpRpcClient(channelParams))
 
   private[proxy] case class RpcResult(destination: ActorRef, expected: Int, deliveries: scala.collection.mutable.ListBuffer[Delivery])
 
 }
 
-class RpcClient(channelParams: Option[ChannelParameters] = None) extends ChannelOwner(channelParams = channelParams) {
+class AmqpRpcClient(channelParams: Option[ChannelParameters] = None) extends ChannelOwner(channelParams = channelParams) {
 
-  import RpcClient._
+  import AmqpRpcClient._
 
   var queue: String = ""
   var consumer: Option[DefaultConsumer] = None
@@ -82,7 +82,7 @@ class RpcClient(channelParams: Option[ChannelParameters] = None) extends Channel
     case msg@ReturnedMessage(replyCode, replyText, exchange, routingKey, properties, body) => {
       correlationMap.get(properties.getCorrelationId) match {
         case Some(results) => {
-          results.destination ! RpcClient.Undelivered(msg)
+          results.destination ! AmqpRpcClient.Undelivered(msg)
           correlationMap -= properties.getCorrelationId
         }
         case None => log.warning("unexpected returned message with correlation id " + properties.getCorrelationId)

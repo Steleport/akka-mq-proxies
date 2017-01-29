@@ -1,24 +1,18 @@
-package space.spacelift.mq.proxy
+package space.spacelift.mq.proxy.impl.amqp
 
-import org.scalatest.junit.JUnitRunner
-import org.junit.runner.RunWith
-
-import concurrent.{Await, Future}
-import concurrent.duration._
-import concurrent.ExecutionContext.Implicits.global
-import akka.pattern.ask
-import com.rabbitmq.client.AMQP.BasicProperties
-import space.spacelift.amqp.Amqp._
-import space.spacelift.amqp.Amqp.Publish
-import space.spacelift.mq.proxy.RpcClient.Response
-import space.spacelift.mq.proxy.RpcClient.Undelivered
-import space.spacelift.amqp.Amqp.ExchangeParameters
-import space.spacelift.mq.proxy.RpcClient.Request
-import space.spacelift.amqp.Amqp.QueueParameters
-import space.spacelift.amqp.Amqp.Delivery
 import java.util.concurrent.TimeUnit
 
+import akka.pattern.ask
+import com.rabbitmq.client.AMQP.BasicProperties
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
+import space.spacelift.amqp.Amqp.{Delivery, ExchangeParameters, Publish, QueueParameters, _}
 import space.spacelift.amqp.{Amqp, ConnectionOwner}
+import space.spacelift.mq.proxy.impl.amqp.AmqpRpcClient.{Request, Response, Undelivered}
+
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.concurrent.{Await, Future}
 
 @RunWith(classOf[JUnitRunner])
 class RpcSpec extends ChannelSpec {
@@ -37,9 +31,9 @@ class RpcSpec extends ChannelSpec {
 
         def onFailure(delivery: Delivery, e: Throwable) = ProcessResult(Some(e.toString.getBytes))
       }
-      val server = ConnectionOwner.createChildActor(conn, RpcServer.props(queue, exchange, routingKey, proc))
-      val client1 = ConnectionOwner.createChildActor(conn, RpcClient.props())
-      val client2 = ConnectionOwner.createChildActor(conn, RpcClient.props())
+      val server = ConnectionOwner.createChildActor(conn, AmqpRpcServer.props(queue, exchange, routingKey, proc))
+      val client1 = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props())
+      val client2 = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props())
 
       waitForConnection(system, conn, server, client1, client2).await()
 
@@ -85,8 +79,8 @@ class RpcSpec extends ChannelSpec {
 
         def onFailure(delivery: Delivery, e: Throwable) = ProcessResult(Some(e.toString.getBytes), Some(delivery.properties))
       }
-      val server = ConnectionOwner.createChildActor(conn, RpcServer.props(processor = proc), timeout = 2000.millis)
-      val client = ConnectionOwner.createChildActor(conn, RpcClient.props(), timeout = 2000.millis)
+      val server = ConnectionOwner.createChildActor(conn, AmqpRpcServer.props(processor = proc), timeout = 2000.millis)
+      val client = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props(), timeout = 2000.millis)
       waitForConnection(system, conn, server, client).await(10, TimeUnit.SECONDS)
       server ! AddBinding(Binding(exchange, queue, routingKey))
       val Amqp.Ok(AddBinding(_), _) = receiveOne(1 second)
@@ -102,7 +96,7 @@ class RpcSpec extends ChannelSpec {
 
   "RPC Clients" should {
     "correctly handle returned message" in {
-      val client = ConnectionOwner.createChildActor(conn, RpcClient.props(), timeout = 2000.millis)
+      val client = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props(), timeout = 2000.millis)
       waitForConnection(system, conn, client).await(2, TimeUnit.SECONDS)
 
       val future = client ? Request(Publish("", "mykey", "yo!".getBytes) :: Nil, 1)
@@ -123,7 +117,7 @@ class RpcSpec extends ChannelSpec {
         def onFailure(delivery: Delivery, e: Throwable) = ProcessResult(None)
       }
       val routingKey = randomKey
-      val server1 = ConnectionOwner.createChildActor(conn, RpcServer.props(proc1), timeout = 2000.millis)
+      val server1 = ConnectionOwner.createChildActor(conn, AmqpRpcServer.props(proc1), timeout = 2000.millis)
       waitForConnection(system, conn, server1).await(5, TimeUnit.SECONDS)
       server1 ! AddBinding(Binding(exchange, queue, routingKey))
       val Amqp.Ok(AddBinding(_), _) = receiveOne(1 second)
@@ -133,12 +127,12 @@ class RpcSpec extends ChannelSpec {
 
         def onFailure(delivery: Delivery, e: Throwable) = ProcessResult(None)
       }
-      val server2 = ConnectionOwner.createChildActor(conn, RpcServer.props(proc2), timeout = 2000.millis)
+      val server2 = ConnectionOwner.createChildActor(conn, AmqpRpcServer.props(proc2), timeout = 2000.millis)
       waitForConnection(system, conn, server2).await(5, TimeUnit.SECONDS)
       server2 ! AddBinding(Binding(exchange, queue, routingKey))
       val Amqp.Ok(AddBinding(_), _) = receiveOne(1 second)
 
-      val client = ConnectionOwner.createChildActor(conn, RpcClient.props(), timeout = 2000.millis)
+      val client = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props(), timeout = 2000.millis)
       waitForConnection(system, conn, client).await(5, TimeUnit.SECONDS)
 
       val future = client ? Request(Publish(exchange.name, routingKey, "yo!".getBytes) :: Nil, 2)

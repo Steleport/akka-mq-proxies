@@ -1,19 +1,18 @@
-package space.spacelift.mq.proxy
+package space.spacelift.mq.proxy.impl.amqp
 
-import akka.testkit.{ImplicitSender, TestKit}
-import akka.actor.{ActorRef, ActorSystem}
-import akka.util.Timeout
-import akka.pattern.gracefulStop
-import org.scalatest.{BeforeAndAfter, WordSpecLike}
-import org.scalatest.Matchers
 import java.util.concurrent.TimeUnit
 
-import scala.concurrent.Await
-import scala.concurrent.duration._
+import akka.actor.{ActorRef, ActorSystem}
+import akka.pattern.gracefulStop
+import akka.testkit.{ImplicitSender, TestKit}
+import akka.util.Timeout
 import com.rabbitmq.client.ConnectionFactory
+import org.scalatest.{BeforeAndAfter, Matchers, WordSpecLike}
 import space.spacelift.amqp.Amqp._
 import space.spacelift.amqp.{ChannelOwner, ConnectionOwner}
 
+import scala.concurrent.Await
+import scala.concurrent.duration._
 import scala.util.Random
 
 class ChannelSpec extends TestKit(ActorSystem("TestSystem")) with WordSpecLike with Matchers with BeforeAndAfter with ImplicitSender {

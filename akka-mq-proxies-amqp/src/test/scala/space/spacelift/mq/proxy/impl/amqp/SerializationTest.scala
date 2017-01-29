@@ -1,11 +1,11 @@
-package space.spacelift.mq.proxy
+package space.spacelift.mq.proxy.impl.amqp
 
-import gpbtest.Gpbtest
-import org.scalatest.junit.AssertionsForJUnit
-import org.junit.Test
-import serializers._
-import thrifttest.Person
 import com.rabbitmq.client.AMQP.BasicProperties
+import org.junit.Test
+import org.scalatest.junit.AssertionsForJUnit
+import space.spacelift.mq.proxy.gpbtest.Gpbtest
+import space.spacelift.mq.proxy.serializers.{SnappyThriftSerializer, _}
+import space.spacelift.mq.proxy.thrifttest.Person
 
 case class Message(a: String, b: Int)
 

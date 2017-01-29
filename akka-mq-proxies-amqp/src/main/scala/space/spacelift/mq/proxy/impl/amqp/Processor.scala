@@ -1,4 +1,4 @@
-package space.spacelift.mq.proxy
+package space.spacelift.mq.proxy.impl.amqp
 
 import com.rabbitmq.client.AMQP.BasicProperties
 import space.spacelift.amqp.Amqp.Delivery

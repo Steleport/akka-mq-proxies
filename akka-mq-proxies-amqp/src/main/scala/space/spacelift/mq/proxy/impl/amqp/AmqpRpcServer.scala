@@ -1,20 +1,19 @@
-package space.spacelift.mq.proxy
+package space.spacelift.mq.proxy.impl.amqp
 
-import com.rabbitmq.client.AMQP.BasicProperties
-import com.rabbitmq.client.{Channel, Envelope}
-
-import util.{Failure, Success}
 import akka.actor.{ActorRef, Props}
 import akka.event.LoggingReceive
+import com.rabbitmq.client.AMQP.BasicProperties
+import com.rabbitmq.client.{Channel, Envelope}
 import space.spacelift.amqp.Amqp._
 import space.spacelift.amqp.Consumer
 
 import scala.concurrent.ExecutionContext
+import scala.util.{Failure, Success}
 
-object RpcServer {
+object AmqpRpcServer {
 
   def props(processor: Processor, init: Seq[Request] = Seq.empty[Request], channelParams: Option[ChannelParameters] = None)(implicit ctx: ExecutionContext): Props =
-    Props(new RpcServer(processor, init, channelParams))
+    Props(new AmqpRpcServer(processor, init, channelParams))
 
   def props(queue: QueueParameters, exchange: ExchangeParameters, routingKey: String, proc: Processor, channelParams: ChannelParameters)(implicit ctx: ExecutionContext): Props =
     props(processor = proc, init = List(AddBinding(Binding(exchange, queue, routingKey))), channelParams = Some(channelParams))
@@ -32,10 +31,10 @@ object RpcServer {
  * <li>sends back the result queue specified in the "replyTo" property</li>
  * </ul>
   *
-  * @param processor    [[space.spacelift.mq.proxy.Processor]] implementation
+  * @param processor    [[Processor]] implementation
  * @param channelParams optional channel parameters
  */
-class RpcServer(processor: Processor, init: Seq[Request] = Seq.empty[Request], channelParams: Option[ChannelParameters] = None)(implicit ctx: ExecutionContext = ExecutionContext.Implicits.global) extends Consumer(listener = None, autoack = false, init = init, channelParams = channelParams) {
+class AmqpRpcServer(processor: Processor, init: Seq[Request] = Seq.empty[Request], channelParams: Option[ChannelParameters] = None)(implicit ctx: ExecutionContext = ExecutionContext.Implicits.global) extends Consumer(listener = None, autoack = false, init = init, channelParams = channelParams) {
 
   private def sendResponse(result: ProcessResult, properties: BasicProperties, channel: Channel) {
     result match {

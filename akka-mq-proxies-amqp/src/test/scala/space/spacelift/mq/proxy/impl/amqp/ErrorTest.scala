@@ -1,23 +1,21 @@
-package space.spacelift.mq.proxy
+package space.spacelift.mq.proxy.impl.amqp
 
+import java.util.concurrent.TimeUnit
+
+import akka.actor.{Actor, ActorSystem, Props}
+import akka.pattern.{AskTimeoutException, ask}
+import akka.testkit.{ImplicitSender, TestKit}
+import com.rabbitmq.client.ConnectionFactory
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
-import org.scalatest.WordSpecLike
-import org.scalatest.Matchers
-import akka.testkit.{ImplicitSender, TestKit}
-import akka.actor.{Actor, Props, ActorSystem}
-import akka.pattern.{AskTimeoutException, ask}
-import concurrent.{Await, ExecutionContext}
-import concurrent.duration._
-import com.rabbitmq.client.ConnectionFactory
-import space.spacelift.amqp.{Amqp, ConnectionOwner}
+import org.scalatest.{Matchers, WordSpecLike}
 import space.spacelift.amqp.Amqp._
-import serializers.JsonSerializer
-import space.spacelift.amqp.Amqp.ChannelParameters
-import space.spacelift.amqp.Amqp.ExchangeParameters
-import space.spacelift.amqp.Amqp.AddBinding
-import space.spacelift.amqp.Amqp.QueueParameters
-import java.util.concurrent.TimeUnit
+import space.spacelift.amqp.{Amqp, ConnectionOwner}
+import space.spacelift.mq.proxy.ProxyException
+import space.spacelift.mq.proxy.serializers.JsonSerializer
+
+import scala.concurrent.duration._
+import scala.concurrent.{Await, ExecutionContext}
 
 
 object ErrorTest {
@@ -51,17 +49,17 @@ class ErrorTest extends TestKit(ActorSystem("TestSystem")) with ImplicitSender w
       // them to our nogood actor
       val server = ConnectionOwner.createChildActor(
         conn,
-        RpcServer.props(queue, exchange, "error", new AmqpProxy.ProxyServer(nogood), channelParams))
+        AmqpRpcServer.props(queue, exchange, "error", new AmqpProxy.ProxyServer(nogood), channelParams))
 
       // create an AMQP proxy client in front of the "error queue"
-      val client = ConnectionOwner.createChildActor(conn, RpcClient.props())
+      val client = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props())
       val proxy = system.actorOf(
         AmqpProxy.ProxyClient.props(client, "amq.direct", "error", JsonSerializer),
         name = "proxy")
 
       Amqp.waitForConnection(system, server).await()
 
-      val thrown = the [AmqpProxyException] thrownBy (Await.result(proxy ? ErrorRequest("test"), 5 seconds))
+      val thrown = the [ProxyException] thrownBy (Await.result(proxy ? ErrorRequest("test"), 5 seconds))
       thrown.getMessage should be("crash")
     }
 
@@ -69,11 +67,11 @@ class ErrorTest extends TestKit(ActorSystem("TestSystem")) with ImplicitSender w
       pending
       val connFactory = new ConnectionFactory()
       val conn = system.actorOf(Props(new ConnectionOwner(connFactory)))
-      val client = ConnectionOwner.createChildActor(conn, RpcClient.props())
+      val client = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props())
       val proxy = system.actorOf(AmqpProxy.ProxyClient.props(client, "amq.direct", "client_side_error", JsonSerializer))
 
       val badrequest = Map(1 -> 1) // lift-json will not serialize this, Map keys must be Strings
-      val thrown = the [AmqpProxyException] thrownBy (Await.result(proxy ? badrequest, 5 seconds))
+      val thrown = the [ProxyException] thrownBy (Await.result(proxy ? badrequest, 5 seconds))
       thrown.getMessage should include("Serialization")
     }
 
@@ -94,11 +92,11 @@ class ErrorTest extends TestKit(ActorSystem("TestSystem")) with ImplicitSender w
 //      val server = ConnectionOwner.createChildActor(
 //        conn,
 //        RpcServer.props(queue, exchange, "donothing", new AmqpProxy.ProxyServer(donothing, timeout = 1 second), channelParams))
-      val server = ConnectionOwner.createChildActor(conn, RpcServer.props(new AmqpProxy.ProxyServer(donothing, timeout = 1 second), channelParams = Some(ChannelParameters(qos = 1))))
+      val server = ConnectionOwner.createChildActor(conn, AmqpRpcServer.props(new AmqpProxy.ProxyServer(donothing, timeout = 1 second), channelParams = Some(ChannelParameters(qos = 1))))
       Amqp.waitForConnection(system, server).await(5, TimeUnit.SECONDS)
       server ! AddBinding(Binding(exchange, queue, routingKey = "donothing"))
       val Amqp.Ok(AddBinding(_), _) = receiveOne(1 second)
-      val client = ConnectionOwner.createChildActor(conn, RpcClient.props())
+      val client = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props())
       val proxy = system.actorOf(AmqpProxy.ProxyClient.props(client, "amq.direct", "donothing", JsonSerializer, timeout = 2 seconds))
 
       Amqp.waitForConnection(system, server, client).await()
