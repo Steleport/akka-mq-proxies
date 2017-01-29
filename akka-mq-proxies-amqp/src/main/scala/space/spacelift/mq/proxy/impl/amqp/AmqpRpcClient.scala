@@ -6,33 +6,19 @@ import com.rabbitmq.client.AMQP.BasicProperties
 import com.rabbitmq.client.{Channel, DefaultConsumer, Envelope}
 import space.spacelift.amqp.Amqp._
 import space.spacelift.amqp.ChannelOwner
+import space.spacelift.mq.proxy.patterns.RpcClient
+
+import space.spacelift.mq.proxy.{Delivery => ProxyDelivery}
 
 object AmqpRpcClient {
-
-  case class Request(publish: List[Publish], numberOfResponses: Int = 1)
-
-  object Request {
-    def apply(publish: Publish) = new Request(List(publish), 1)
-  }
-
-  case class Response(deliveries: List[Delivery])
-
-  case class Undelivered(msg: ReturnedMessage)
-
   def props(channelParams: Option[ChannelParameters] = None): Props = Props(new AmqpRpcClient(channelParams))
-
-  private[proxy] case class RpcResult(destination: ActorRef, expected: Int, deliveries: scala.collection.mutable.ListBuffer[Delivery])
-
 }
 
-class AmqpRpcClient(channelParams: Option[ChannelParameters] = None) extends ChannelOwner(channelParams = channelParams) {
-
-  import AmqpRpcClient._
+class AmqpRpcClient(channelParams: Option[ChannelParameters] = None) extends ChannelOwner(channelParams = channelParams) with RpcClient {
+  import RpcClient._
 
   var queue: String = ""
   var consumer: Option[DefaultConsumer] = None
-  var counter: Int = 0
-  var correlationMap = scala.collection.mutable.Map.empty[String, RpcResult]
 
   override def onChannel(channel: Channel, forwarder: ActorRef) {
     super.onChannel(channel, forwarder)
@@ -58,19 +44,19 @@ class AmqpRpcClient(channelParams: Option[ChannelParameters] = None) extends Cha
     case Request(publish, numberOfResponses) => {
       counter = counter + 1
       log.debug(s"sending ${publish.size} messages, replyTo = $queue")
-      publish.foreach(p => {
+      publish.map(_.asInstanceOf[Publish]).foreach(p => {
         val props = p.properties.getOrElse(new BasicProperties()).builder.correlationId(counter.toString).replyTo(queue).build()
         channel.basicPublish(p.exchange, p.key, p.mandatory, p.immediate, props, p.body)
       })
       if (numberOfResponses > 0) {
-        correlationMap += (counter.toString -> RpcResult(sender, numberOfResponses, collection.mutable.ListBuffer.empty[Delivery]))
+        correlationMap += (counter.toString -> RpcResult(sender, numberOfResponses, collection.mutable.ListBuffer.empty[ProxyDelivery]))
       }
     }
     case delivery@Delivery(consumerTag: String, envelope: Envelope, properties: BasicProperties, body: Array[Byte]) => {
       channel.basicAck(envelope.getDeliveryTag, false)
       correlationMap.get(properties.getCorrelationId) match {
         case Some(results) => {
-          results.deliveries += delivery
+          results.deliveries += AmqpProxy.deliveryToProxyDelivery(delivery)
           if (results.deliveries.length == results.expected) {
             results.destination ! Response(results.deliveries.toList)
             correlationMap -= properties.getCorrelationId
@@ -82,7 +68,7 @@ class AmqpRpcClient(channelParams: Option[ChannelParameters] = None) extends Cha
     case msg@ReturnedMessage(replyCode, replyText, exchange, routingKey, properties, body) => {
       correlationMap.get(properties.getCorrelationId) match {
         case Some(results) => {
-          results.destination ! AmqpRpcClient.Undelivered(msg)
+          results.destination ! RpcClient.Undelivered(msg)
           correlationMap -= properties.getCorrelationId
         }
         case None => log.warning("unexpected returned message with correlation id " + properties.getCorrelationId)

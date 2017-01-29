@@ -11,7 +11,25 @@ trait ProxiedActorSystem {
     def rpcServerActorOf(props: Props, name: String): ActorRef = {
       val realActor = system.actorOf(props, name)
 
-      proxyConnectionWrapper.wrapActorOf(props, Some(name), 5 seconds)
+      proxyConnectionWrapper.wrapRpcServerActorOf(system, realActor, name, 5 seconds)
+    }
+
+    def rpcClientActorOf(props: Props, name: String): ActorRef = {
+      val realActor = system.actorOf(props, name)
+
+      proxyConnectionWrapper.wrapRpcServerActorOf(system, realActor, name, 5 seconds)
+    }
+
+    def publisherActorOf(props: Props, name: String): ActorRef = {
+      val realActor = system.actorOf(props, name)
+
+      proxyConnectionWrapper.wrapPublisherActorOf(system, realActor, name, 5 seconds)
+    }
+
+    def subscriberActorOf(props: Props, name: String): ActorRef = {
+      val realActor = system.actorOf(props, name)
+
+      proxyConnectionWrapper.wrapSubscriberActorOf(system, realActor, name, 5 seconds)
     }
   }
 }

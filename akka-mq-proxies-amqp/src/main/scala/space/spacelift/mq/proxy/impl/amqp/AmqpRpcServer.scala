@@ -6,6 +6,8 @@ import com.rabbitmq.client.AMQP.BasicProperties
 import com.rabbitmq.client.{Channel, Envelope}
 import space.spacelift.amqp.Amqp._
 import space.spacelift.amqp.Consumer
+import space.spacelift.mq.proxy.MessageProperties
+import space.spacelift.mq.proxy.patterns.{ProcessResult, Processor, RpcServer}
 
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
@@ -34,15 +36,21 @@ object AmqpRpcServer {
   * @param processor    [[Processor]] implementation
  * @param channelParams optional channel parameters
  */
-class AmqpRpcServer(processor: Processor, init: Seq[Request] = Seq.empty[Request], channelParams: Option[ChannelParameters] = None)(implicit ctx: ExecutionContext = ExecutionContext.Implicits.global) extends Consumer(listener = None, autoack = false, init = init, channelParams = channelParams) {
-
+class AmqpRpcServer(val processor: Processor, init: Seq[Request] = Seq.empty[Request], channelParams: Option[ChannelParameters] = None)(implicit ctx: ExecutionContext = ExecutionContext.Implicits.global) extends Consumer(listener = None, autoack = false, init = init, channelParams = channelParams) with RpcServer {
   private def sendResponse(result: ProcessResult, properties: BasicProperties, channel: Channel) {
     result match {
       // send a reply only if processor return something *and* replyTo is set
       case ProcessResult(Some(data), customProperties) if (properties.getReplyTo != null) => {
         // publish the response with the same correlation id as the request
-        val props = customProperties.getOrElse(new BasicProperties()).builder().correlationId(properties.getCorrelationId).build()
-        channel.basicPublish("", properties.getReplyTo, true, false, props, data)
+        val props = new BasicProperties
+          .Builder()
+          .deliveryMode(properties.getDeliveryMode)
+          .correlationId(properties.getCorrelationId)
+        if (customProperties.isDefined) {
+          props.contentEncoding(customProperties.get.clazz)
+          props.contentType(customProperties.get.contentType)
+        }
+        channel.basicPublish("", properties.getReplyTo, true, false, props.build(), data)
       }
       case _ => {}
     }
@@ -51,7 +59,8 @@ class AmqpRpcServer(processor: Processor, init: Seq[Request] = Seq.empty[Request
   override def connected(channel: Channel, forwarder: ActorRef) : Receive = LoggingReceive({
     case delivery@Delivery(consumerTag: String, envelope: Envelope, properties: BasicProperties, body: Array[Byte]) => {
       log.debug("processing delivery")
-      processor.process(delivery).onComplete {
+      val proxyDelivery = AmqpProxy.deliveryToProxyDelivery(delivery)
+      processor.process(proxyDelivery).onComplete {
         case Success(result) => {
           sendResponse(result, properties, channel)
           channel.basicAck(envelope.getDeliveryTag, false)
@@ -66,7 +75,7 @@ class AmqpRpcServer(processor: Processor, init: Seq[Request] = Seq.empty[Request
             // second failure: reply with an error message, reject (but don't requeue) the message
             case true => {
               log.error(error, "processing {} failed for the second time, acking message", delivery)
-              val result = processor.onFailure(delivery, error)
+              val result = processor.onFailure(proxyDelivery, error)
               sendResponse(result, properties, channel)
               channel.basicReject(envelope.getDeliveryTag, false)
             }

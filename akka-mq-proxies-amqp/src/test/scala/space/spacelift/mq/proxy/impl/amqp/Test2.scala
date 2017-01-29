@@ -6,7 +6,8 @@ import akka.util.Timeout
 import com.rabbitmq.client.ConnectionFactory
 import space.spacelift.amqp.Amqp.Publish
 import space.spacelift.amqp.ConnectionOwner
-import space.spacelift.mq.proxy.impl.amqp.AmqpRpcClient.Request
+import space.spacelift.mq.proxy.patterns.RpcClient
+import space.spacelift.mq.proxy.patterns.RpcClient.Request
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
@@ -27,7 +28,7 @@ object Test2 extends App {
   // send 1 request every second
   while(true) {
     println("sending request")
-    (client ? Request(Publish("amq.direct", "my_key", "test".getBytes("UTF-8")))).mapTo[AmqpRpcClient.Response].map(response => {
+    (client ? Request(Publish("amq.direct", "my_key", "test".getBytes("UTF-8")))).mapTo[RpcClient.Response].map(response => {
       // we expect 1 delivery
       val delivery = response.deliveries.head
       println("reponse : " + new String(delivery.body))

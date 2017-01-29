@@ -1,7 +1,6 @@
-package space.spacelift.mq.proxy.impl.amqp
+package space.spacelift.mq.proxy.patterns
 
-import com.rabbitmq.client.AMQP.BasicProperties
-import space.spacelift.amqp.Amqp.Delivery
+import space.spacelift.mq.proxy.{Delivery, MessageProperties}
 
 import scala.concurrent.Future
 
@@ -11,7 +10,7 @@ import scala.concurrent.Future
   * @param value optional response message body; if None, nothing will be sent back ("fire and forget" pattern)
   * @param properties optional response message properties
   */
-case class ProcessResult(value: Option[Array[Byte]], properties: Option[BasicProperties] = None)
+case class ProcessResult(value: Option[Array[Byte]], properties: Option[MessageProperties] = None)
 
 /**
   * generic processor trait

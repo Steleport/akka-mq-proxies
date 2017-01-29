@@ -9,6 +9,7 @@ import com.rabbitmq.client.AMQP.BasicProperties
 import org.slf4j.LoggerFactory
 import space.spacelift.amqp.Amqp
 import space.spacelift.amqp.Amqp.{Delivery, Publish}
+import space.spacelift.mq.proxy.patterns.{ProcessResult, Processor, RpcClient}
 import space.spacelift.mq.proxy.serializers.JsonSerializer
 import space.spacelift.mq.proxy.{ProxyException, _}
 
@@ -53,41 +54,8 @@ object AmqpProxy extends Proxy {
     super.deserialize(body, MessageProperties(props.getContentEncoding, props.getContentType))
   }
 
-  class ProxyServer(server: ActorRef, timeout: Timeout = 30 seconds) extends Processor {
-
-    import ExecutionContext.Implicits.global
-
-    lazy val logger = LoggerFactory.getLogger(classOf[ProxyServer])
-
-    def process(delivery: Delivery): Future[ProcessResult] = {
-      logger.trace("consumer %s received %s with properties %s".format(delivery.consumerTag, delivery.envelope, delivery.properties))
-
-      Try(deserialize(delivery.body, delivery.properties)) match {
-        case Success((request, serializer)) => {
-          logger.debug("handling delivery of type %s".format(request.getClass.getName))
-
-          val future = for {
-            response <- (server ? request)(timeout).mapTo[AnyRef]
-            _ = logger.debug("sending response of type %s".format(response.getClass.getName))
-            (body, props) = serialize(response, serializer)
-          } yield ProcessResult(Some(body), Some(props))
-
-          future.onFailure {
-            case cause => logger.error(s"inner call to server actor $server failed", cause)
-          }
-          future
-        }
-        case Failure(cause) => {
-          logger.error("deserialization failed", cause)
-          Future.failed(cause)
-        }
-      }
-    }
-
-    def onFailure(delivery: Delivery, e: Throwable): ProcessResult = {
-      val (body, props) = serialize(ServerFailure(e.getMessage, e.toString), JsonSerializer)
-      ProcessResult(Some(body), Some(props))
-    }
+  def deliveryToProxyDelivery(delivery: Delivery) = {
+    space.spacelift.mq.proxy.Delivery(delivery.body, MessageProperties(delivery.properties.getContentEncoding, delivery.properties.getContentType))
   }
 
   object ProxyClient {
@@ -129,19 +97,18 @@ object AmqpProxy extends Proxy {
           case Success((body, props)) => {
             // publish the serialized message (and tell the RPC client that we expect one response)
             val publish = Publish(exchange, routingKey, body, Some(props), mandatory = mandatory, immediate = immediate)
-            val future = (client ? AmqpRpcClient.Request(publish :: Nil, 1))(timeout).mapTo[AnyRef].map(response => {
-              response match {
-                case result : AmqpRpcClient.Response => {
-                  val delivery = result.deliveries(0)
-                  val (response, serializer) = deserialize(delivery.body, delivery.properties)
-                  response match {
-                    case ServerFailure(message, throwableAsString) => akka.actor.Status.Failure(new ProxyException(message, throwableAsString))
-                    case _ => response
-                  }
+            val future = (client ? RpcClient.Request(publish :: Nil, 1))(timeout).mapTo[AnyRef].map {
+              case result : RpcClient.Response => {
+                val delivery = result.deliveries(0)
+                val (response, serializer) = deserialize(delivery.body, delivery.properties)
+                response match {
+                  case ServerFailure(message, throwableAsString) => akka.actor.Status.Failure(new ProxyException(message, throwableAsString))
+                  case _ => response
                 }
-                case undelivered : AmqpRpcClient.Undelivered => undelivered
               }
-            })
+              case undelivered : RpcClient.Undelivered => undelivered
+            }
+
             future.pipeTo(sender)
           }
           case Failure(cause) => sender ! akka.actor.Status.Failure(new ProxyException("Serialization error", cause.getMessage))
@@ -179,5 +146,4 @@ object AmqpProxy extends Proxy {
       }
     }
   }
-
 }

@@ -18,7 +18,7 @@ class SerializationTest extends AssertionsForJUnit with Proxy {
     val (body, props) = super.serialize(serializer, msg)
 
     assert(new String(body) === """{"a":"toto","b":123}""")
-    assert(props.contentType === "json")
+    assert(props.contentType === "application/json")
     assert(props.clazz === "space.spacelift.amqp.proxy.Message")
 
     val (deserialized, _) = super.deserialize(body, props)
@@ -33,7 +33,7 @@ class SerializationTest extends AssertionsForJUnit with Proxy {
 
     val (body, props) = super.serialize(serializer, msg)
 
-    assert(props.contentType === "snappy-json")
+    assert(props.contentType === "application/x-snappy-json")
     assert(props.clazz === "space.spacelift.amqp.proxy.Message")
 
     val (deserialized, _) = super.deserialize(body, props)
@@ -48,7 +48,7 @@ class SerializationTest extends AssertionsForJUnit with Proxy {
 
     val (body, props) = super.serialize(serializer, msg)
 
-    assert(props.contentType === "protobuf")
+    assert(props.contentType === "application/x-protobuf")
     assert(props.clazz === """space.spacelift.amqp.proxy.gpbtest.Gpbtest$Person""")
 
     val (deserialized, _) = super.deserialize(body, props)
@@ -63,7 +63,7 @@ class SerializationTest extends AssertionsForJUnit with Proxy {
 
     val (body, props) = super.serialize(serializer, msg)
 
-    assert(props.contentType === "snappy-protobuf")
+    assert(props.contentType === "application/x-snappy-protobuf")
     assert(props.clazz === """space.spacelift.amqp.proxy.gpbtest.Gpbtest$Person""")
 
     val (deserialized, _) = super.deserialize(body, props)
@@ -78,7 +78,7 @@ class SerializationTest extends AssertionsForJUnit with Proxy {
 
     val (body, props) = super.serialize(serializer, msg)
 
-    assert(props.contentType === "thrift")
+    assert(props.contentType === "application/x-thrift")
     assert(props.clazz === """space.spacelift.amqp.proxy.thrifttest.Person""")
 
     val (deserialized, _) = super.deserialize(body, props)
@@ -93,7 +93,7 @@ class SerializationTest extends AssertionsForJUnit with Proxy {
 
     val (body, props) = super.serialize(serializer, msg)
 
-    assert(props.contentType === "snappy-thrift")
+    assert(props.contentType === "application/x-snappy-thrift")
     assert(props.clazz === """space.spacelift.amqp.proxy.thrifttest.Person""")
 
     val (deserialized, _) = super.deserialize(body, props)
