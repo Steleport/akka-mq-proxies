@@ -38,7 +38,7 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
 
   def extractExchangeParameters(config: Config, name: String): ExchangeParameters = {
     var exchangeName = name
-    var isExchangePassive = true
+    var isExchangePassive = false
     var exchangeType = "fanout"
     var isExchangeDurable = true
     var isExchangeAutodelete = false
@@ -73,7 +73,7 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
   def extractAllParameters(config: Config, name: String): (ExchangeParameters, QueueParameters, ChannelParameters) = {
     var queueName = name
     var randomizeQueueName = true
-    var isQueuePassive = true
+    var isQueuePassive = false
     var isQueueAutodelete = true
     var isQueueDurable = true
     var qos = 1
@@ -125,7 +125,7 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
     // Create client
     val client = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props(exchange, name, queue, channelParams))
 
-    val proxy = system.actorOf(Proxy.ProxyClient.props(client), name = "proxy" + name)
+    val proxy = system.actorOf(Proxy.ProxyClient.props(client), name = "proxyClient" + name)
 
     Amqp.waitForConnection(system, client).await()
 
@@ -135,14 +135,14 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
   override def wrapRpcServerActorOf(system: ActorSystem, realActor: ActorRef, name: String, timeout: Timeout): ActorRef = {
     val conn = getConnectionOwner(system)
 
-    system.log.debug("Creating proxy actor for actor " + realActor)
+    println("Creating proxy actor for actor " + realActor)
 
     val (exchange, queue, channelParams) = extractAllParameters(config, name)
 
     // Create our wrapped Actor of the original Actor
     val server = ConnectionOwner.createChildActor(conn,
       AmqpRpcServer.props(queue = queue, exchange = exchange, routingKey = name, proc = new Proxy.ProxyServer(realActor), channelParams = channelParams),
-      name = Some("proxy" + queue.name)
+      name = Some("proxyServer" + queue.name)
     )
 
     Amqp.waitForConnection(system, server).await()
