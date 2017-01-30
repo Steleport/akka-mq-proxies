@@ -44,10 +44,8 @@ class RemoteGpbCallTest extends TestKit(ActorSystem("TestSystem")) with Implicit
         case Amqp.Ok(AddBinding(_), _) => true
       }
       // create an AMQP proxy client in front of the "calculator queue"
-      val client = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props())
-      val proxy = system.actorOf(
-        AmqpProxy.ProxyClient.props(client, "amq.direct", "calculator-gpb", ProtobufSerializer),
-        name = "proxy")
+      val client = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props(ExchangeParameters("amq.direct", true, "direct"), "calculator-gpb"))
+      val proxy = system.actorOf(Props(new AmqpProxy.ProxyClient(client, ProtobufSerializer)), name = "proxy")
 
       Amqp.waitForConnection(system, client).await(5, TimeUnit.SECONDS)
       implicit val timeout: akka.util.Timeout = 5 seconds

@@ -10,7 +10,7 @@ import space.spacelift.amqp.Amqp._
 import space.spacelift.amqp.{Amqp, ConnectionOwner}
 import space.spacelift.mq.proxy.patterns.RpcClient.{Request, Response, Undelivered}
 import space.spacelift.mq.proxy.patterns.{ProcessResult, Processor}
-import space.spacelift.mq.proxy.{Delivery => ProxyDelivery}
+import space.spacelift.mq.proxy.{MessageProperties, Delivery => ProxyDelivery}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
@@ -34,15 +34,15 @@ class RpcSpec extends ChannelSpec {
         def onFailure(delivery: ProxyDelivery, e: Throwable) = ProcessResult(Some(e.toString.getBytes))
       }
       val server = ConnectionOwner.createChildActor(conn, AmqpRpcServer.props(queue, exchange, routingKey, proc))
-      val client1 = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props())
-      val client2 = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props())
+      val client1 = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props(exchange, routingKey))
+      val client2 = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props(exchange, routingKey))
 
       waitForConnection(system, conn, server, client1, client2).await()
 
       val f1 = Future {
         for (i <- 0 to 10) {
           try {
-            val future = client1 ? Request(Publish("amq.direct", routingKey, i.toString.getBytes) :: Nil, 1)
+            val future = client1 ? Request(ProxyDelivery(i.toString.getBytes, MessageProperties("String", "text/plain")) :: Nil, 1)
             val result = Await.result(future, 1000.millis).asInstanceOf[Response]
             println("result1 " + new String(result.deliveries.head.body))
             Thread.sleep(300)
@@ -55,7 +55,7 @@ class RpcSpec extends ChannelSpec {
       val f2 = Future {
         for (i <- 0 to 10) {
           try {
-            val future = client2 ? Request(Publish("amq.direct", routingKey, i.toString.getBytes) :: Nil, 1)
+            val future = client2 ? Request(ProxyDelivery(i.toString.getBytes, MessageProperties("String", "text/plain")) :: Nil, 1)
             val result = Await.result(future, 1000.millis).asInstanceOf[Response]
             println("result2 " + new String(result.deliveries.head.body))
             Thread.sleep(300)
@@ -82,13 +82,13 @@ class RpcSpec extends ChannelSpec {
         def onFailure(delivery: ProxyDelivery, e: Throwable) = ProcessResult(Some(e.toString.getBytes), Some(delivery.properties))
       }
       val server = ConnectionOwner.createChildActor(conn, AmqpRpcServer.props(processor = proc), timeout = 2000.millis)
-      val client = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props(), timeout = 2000.millis)
+      val client = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props(exchange, routingKey), timeout = 2000.millis)
       waitForConnection(system, conn, server, client).await(10, TimeUnit.SECONDS)
       server ! AddBinding(Binding(exchange, queue, routingKey))
       val Amqp.Ok(AddBinding(_), _) = receiveOne(1 second)
 
-      val myprops = new BasicProperties.Builder().contentType("my content").contentEncoding("my encoding").build()
-      val future = client ? Request(Publish("amq.direct", routingKey, "yo!!".getBytes, Some(myprops)) :: Nil, 1)
+      val myprops = MessageProperties("my encoding", "my content")
+      val future = client ? Request(ProxyDelivery("yo!!".getBytes, myprops) :: Nil, 1)
       val result = Await.result(future, 1000.millis).asInstanceOf[Response]
       val delivery = result.deliveries.head
       assert(delivery.properties.contentType === "my content")
@@ -98,10 +98,10 @@ class RpcSpec extends ChannelSpec {
 
   "RPC Clients" should {
     "correctly handle returned message" in {
-      val client = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props(), timeout = 2000.millis)
+      val client = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props(ExchangeParameters("", true, "direct"), "mykey"), timeout = 2000.millis)
       waitForConnection(system, conn, client).await(2, TimeUnit.SECONDS)
 
-      val future = client ? Request(Publish("", "mykey", "yo!".getBytes) :: Nil, 1)
+      val future = client ? Request(ProxyDelivery("yo!".getBytes, MessageProperties("String", "text/plain")) :: Nil, 1)
       val result = Await.result(future, 1000.millis)
       assert(result.isInstanceOf[Undelivered])
     }
@@ -134,10 +134,10 @@ class RpcSpec extends ChannelSpec {
       server2 ! AddBinding(Binding(exchange, queue, routingKey))
       val Amqp.Ok(AddBinding(_), _) = receiveOne(1 second)
 
-      val client = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props(), timeout = 2000.millis)
+      val client = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props(exchange, routingKey), timeout = 2000.millis)
       waitForConnection(system, conn, client).await(5, TimeUnit.SECONDS)
 
-      val future = client ? Request(Publish(exchange.name, routingKey, "yo!".getBytes) :: Nil, 2)
+      val future = client ? Request(ProxyDelivery("yo!".getBytes, MessageProperties("String", "text/plain")) :: Nil, 2)
       val result = Await.result(future, 2000.millis).asInstanceOf[Response]
       assert(result.deliveries.length === 2)
       // we're supposed to have received to answers, "proc1" and "proc2"

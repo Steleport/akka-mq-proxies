@@ -51,9 +51,8 @@ class RemoteJsonCallTest extends TestKit(ActorSystem("TestSystem")) with Implici
       }
 
       // create an AMQP proxy client in front of the "calculator queue"
-      val client = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props())
-      val proxy = system.actorOf(
-        AmqpProxy.ProxyClient.props(client, "amq.direct", "calculator-json", JsonSerializer),
+      val client = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props(ExchangeParameters("amq.direct", true, "direct"), "calculator-json"))
+      val proxy = system.actorOf(Props(new AmqpProxy.ProxyClient(client, JsonSerializer)),
         name = "proxy")
 
       Amqp.waitForConnection(system, client).await(5, TimeUnit.SECONDS)

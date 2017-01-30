@@ -1,11 +1,11 @@
 package space.spacelift.mq.proxy
 
-import akka.actor.ActorRef
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.serialization.Serializer
 import akka.util.Timeout
-import akka.pattern.ask
+import akka.pattern.{ask, pipe}
 import org.slf4j.LoggerFactory
-import space.spacelift.mq.proxy.patterns.{ProcessResult, Processor}
+import space.spacelift.mq.proxy.patterns.{ProcessResult, Processor, RpcClient}
 import space.spacelift.mq.proxy.serializers.{JsonSerializer, Serializers}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -100,6 +100,75 @@ trait Proxy {
     def onFailure(delivery: Delivery, e: Throwable): ProcessResult = {
       val (body, props) = serialize(Serializers.contentTypeToSerializer(delivery.properties.contentType), ServerFailure(e.getMessage, e.toString))
       ProcessResult(Some(body), Some(props))
+    }
+  }
+
+  object ProxyClient {
+    /**
+      * Defines a ProxyClient with a default serializer
+      * @param client The RPC Client
+      * @return Props containing the ProxyClient
+      */
+    def props(client: ActorRef): Props = Props(new ProxyClient(client, JsonSerializer))
+  }
+
+  /**
+    * standard  one-request/one response proxy, which allows to write (myActor ? MyRequest).mapTo[MyResponse]
+    * @param client RPC Client
+    */
+  class ProxyClient(client: ActorRef, serializer: Serializer, timeout: Timeout = 30 seconds) extends Actor {
+
+    import ExecutionContext.Implicits.global
+
+    def receive: Actor.Receive = {
+      case msg: AnyRef => {
+        Try(serialize(serializer, msg)) match {
+          case Success((body, props)) => {
+            // publish the serialized message (and tell the RPC client that we expect one response)
+            val publish = Delivery(body, props)
+            val future = (client ? RpcClient.Request(publish :: Nil, 1))(timeout).mapTo[AnyRef].map {
+              case result : RpcClient.Response => {
+                val delivery = result.deliveries(0)
+                val (response, serializer) = deserialize(delivery.body, delivery.properties)
+                response match {
+                  case ServerFailure(message, throwableAsString) => akka.actor.Status.Failure(new ProxyException(message, throwableAsString))
+                  case _ => response
+                }
+              }
+              case undelivered : RpcClient.Undelivered => undelivered
+            }
+
+            future.pipeTo(sender)
+          }
+          case Failure(cause) => sender ! akka.actor.Status.Failure(new ProxyException("Serialization error", cause.getMessage))
+        }
+      }
+    }
+  }
+
+  object ProxySender {
+    /**
+      * Defines a ProxySender with a default serializer
+      * @param client RPC Client
+      * @return Props containing the ProxySender
+      */
+    def props(client: ActorRef): Props = Props(new ProxySender(client, JsonSerializer))
+  }
+
+  /**
+    * "fire-and-forget" proxy, which allows to write myActor ! MyRequest
+    * TODO: Change this to use a Publisher rather than an RPC Client
+    * @param client RPC Client
+    */
+  class ProxySender(client: ActorRef, serializer: Serializer) extends Actor with ActorLogging {
+
+    def receive: Actor.Receive = {
+      case msg: AnyRef => {
+        val (body, props) = serialize(serializer, msg)
+        val publish = Delivery(body, props)
+        log.debug("sending %s to %s".format(publish, client))
+        client ! publish
+      }
     }
   }
 }

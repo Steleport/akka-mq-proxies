@@ -4,10 +4,10 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import space.spacelift.mq.proxy.Delivery
 
 object RpcClient {
-  case class Request(publish: List[AnyRef], numberOfResponses: Int = 1)
+  case class Request(publish: List[Delivery], numberOfResponses: Int = 1)
 
   object Request {
-    def apply(publish: AnyRef) = new Request(List(publish), 1)
+    def apply(publish: Delivery) = new Request(List(publish), 1)
   }
 
   case class Response(deliveries: List[Delivery])
