@@ -44,7 +44,7 @@ case class MessageProperties(clazz: String, contentType: String)
   */
 case class Delivery(body: Array[Byte], properties: MessageProperties)
 
-trait Proxy {
+object Proxy {
   /**
     * "server" side failure, that will be serialized and sent back to the client proxy
     *

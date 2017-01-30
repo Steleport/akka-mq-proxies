@@ -11,6 +11,7 @@ import org.scalatest.junit.JUnitRunner
 import org.scalatest.{Matchers, WordSpecLike}
 import space.spacelift.amqp.Amqp.{AddBinding, ChannelParameters, ExchangeParameters, QueueParameters, _}
 import space.spacelift.amqp.{Amqp, ConnectionOwner}
+import space.spacelift.mq.proxy.Proxy
 import space.spacelift.mq.proxy.serializers.JsonSerializer
 
 import scala.concurrent.duration._
@@ -42,7 +43,7 @@ class RemoteJsonCallTest extends TestKit(ActorSystem("TestSystem")) with Implici
       }))
       // create an AMQP proxy server which consumes messages from the "calculator" queue and passes
       // them to our Calculator actor
-      val server = ConnectionOwner.createChildActor(conn, AmqpRpcServer.props(new AmqpProxy.ProxyServer(calc), channelParams = Some(ChannelParameters(qos = 1))))
+      val server = ConnectionOwner.createChildActor(conn, AmqpRpcServer.props(new Proxy.ProxyServer(calc), channelParams = Some(ChannelParameters(qos = 1))))
       Amqp.waitForConnection(system, server).await(5, TimeUnit.SECONDS)
 
       server ! AddBinding(Binding(exchange, queue, "calculator-json"))
@@ -52,7 +53,7 @@ class RemoteJsonCallTest extends TestKit(ActorSystem("TestSystem")) with Implici
 
       // create an AMQP proxy client in front of the "calculator queue"
       val client = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props(ExchangeParameters("amq.direct", true, "direct"), "calculator-json"))
-      val proxy = system.actorOf(Props(new AmqpProxy.ProxyClient(client, JsonSerializer)),
+      val proxy = system.actorOf(Props(new Proxy.ProxyClient(client, JsonSerializer)),
         name = "proxy")
 
       Amqp.waitForConnection(system, client).await(5, TimeUnit.SECONDS)

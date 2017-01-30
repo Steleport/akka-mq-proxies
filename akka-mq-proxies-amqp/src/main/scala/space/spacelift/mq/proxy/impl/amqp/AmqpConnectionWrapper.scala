@@ -9,7 +9,9 @@ import space.spacelift.amqp.Amqp.{ChannelParameters, ExchangeParameters, QueuePa
 import space.spacelift.amqp.{Amqp, ConnectionOwner}
 import com.rabbitmq.client.ConnectionFactory
 import com.typesafe.config.Config
+import space.spacelift.mq.proxy.Proxy
 import space.spacelift.mq.proxy.ConnectionWrapper
+import space.spacelift.mq.proxy.patterns.RpcClient
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -34,28 +36,12 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
     connectionOwner.get
   }
 
-  override def wrapSubscriberActorOf(system: ActorSystem, realActor: ActorRef, name: String, timeout: Timeout): ActorRef = ???
-
-  override def wrapPublisherActorOf(system: ActorSystem, realActor: ActorRef, name: String, timeout: Timeout): ActorRef = ???
-
-  override def wrapRpcClientActorOf(system: ActorSystem, realActor: ActorRef, name: String, timeout: Timeout): ActorRef = ???
-
-  override def wrapRpcServerActorOf(system: ActorSystem, realActor: ActorRef, name: String, timeout: Timeout): ActorRef = {
-    val randuuid = UUID.randomUUID().toString
-
-    val conn = getConnectionOwner(system)
-
+  def extractExchangeParameters(config: Config, name: String): ExchangeParameters = {
     var exchangeName = name
-    var queueName = name
     var isExchangePassive = true
     var exchangeType = "fanout"
     var isExchangeDurable = true
-    var randomizeQueueName = true
-    var isQueuePassive = true
-    var isQueueAutodelete = true
-    var isQueueDurable = true
-    var qos = 1
-    var isQosGlobal = false
+    var isExchangeAutodelete = false
 
     if (config.hasPath(s"spacelift.proxies.${name}")) {
       if (config.hasPath(s"spacelift.proxies.${name}.exchange.name")) {
@@ -70,6 +56,30 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
       if (config.hasPath(s"spacelift.proxies.${name}.exchange.durable")) {
         isExchangeDurable = config.getBoolean(s"spacelift.proxies.${name}.exchange.durable")
       }
+      if (config.hasPath(s"spacelift.proxies.${name}.exchange.durable")) {
+        isExchangeDurable = config.getBoolean(s"spacelift.proxies.${name}.exchange.durable")
+      }
+      if (config.hasPath(s"spacelift.proxies.${name}.exchange.durable")) {
+        isExchangeDurable = config.getBoolean(s"spacelift.proxies.${name}.exchange.durable")
+      }
+      if (config.hasPath(s"spacelift.proxies.${name}.exchange.autodelete")) {
+        isExchangeAutodelete = config.getBoolean(s"spacelift.proxies.${name}.exchange.autodelete")
+      }
+    }
+
+    ExchangeParameters(name = name, passive = isExchangePassive, exchangeType = exchangeType, durable = isExchangeDurable, autodelete = isExchangeAutodelete)
+  }
+
+  def extractAllParameters(config: Config, name: String): (ExchangeParameters, QueueParameters, ChannelParameters) = {
+    var queueName = name
+    var randomizeQueueName = true
+    var isQueuePassive = true
+    var isQueueAutodelete = true
+    var isQueueDurable = true
+    var qos = 1
+    var isQosGlobal = false
+
+    if (config.hasPath(s"spacelift.proxies.${name}")) {
       if (config.hasPath(s"spacelift.proxies.${name}.queue.name")) {
         queueName = config.getString(s"spacelift.proxies.${name}.queue.name")
       }
@@ -94,16 +104,45 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
     }
 
     // Create a wrapped connection Actor
-    val exchange = ExchangeParameters(name = exchangeName, passive = isExchangePassive, exchangeType = exchangeType, durable = isExchangeDurable)
-    val queue = QueueParameters(name = queueName + (if (randomizeQueueName) "-" + randuuid else ""), passive = isQueuePassive, autodelete = isQueueAutodelete, durable = isQueueDurable)
+    val exchange = extractExchangeParameters(config, name)
+    val queue = QueueParameters(name = queueName + (if (randomizeQueueName) "-" + UUID.randomUUID().toString else ""), passive = isQueuePassive, autodelete = isQueueAutodelete, durable = isQueueDurable)
     val channelParams = ChannelParameters(qos = qos, global = isQosGlobal)
 
-    println("Creating proxy actor for actor " + realActor)
+    (exchange, queue, channelParams)
+  }
+
+  override def wrapSubscriberActorOf(system: ActorSystem, realActor: ActorRef, name: String, timeout: Timeout): ActorRef = ???
+
+  override def wrapPublisherActorOf(system: ActorSystem, realActor: ActorRef, name: String, timeout: Timeout): ActorRef = ???
+
+  override def wrapRpcClientActorOf(system: ActorSystem, realActor: ActorRef, name: String, timeout: Timeout): ActorRef = {
+    val conn = getConnectionOwner(system)
+
+    system.log.debug("Creating proxy actor for actor " + realActor)
+
+    val (exchange, queue, channelParams) = extractAllParameters(config, name)
+
+    // Create client
+    val client = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props(exchange, name, queue, channelParams))
+
+    val proxy = system.actorOf(Proxy.ProxyClient.props(client), name = "proxy" + name)
+
+    Amqp.waitForConnection(system, client).await()
+
+    proxy
+  }
+
+  override def wrapRpcServerActorOf(system: ActorSystem, realActor: ActorRef, name: String, timeout: Timeout): ActorRef = {
+    val conn = getConnectionOwner(system)
+
+    system.log.debug("Creating proxy actor for actor " + realActor)
+
+    val (exchange, queue, channelParams) = extractAllParameters(config, name)
 
     // Create our wrapped Actor of the original Actor
     val server = ConnectionOwner.createChildActor(conn,
-      AmqpRpcServer.props(queue = queue, exchange = exchange, routingKey = name, proc = new AmqpProxy.ProxyServer(realActor), channelParams = channelParams),
-      name = Some("proxy" + name + "-" + randuuid)
+      AmqpRpcServer.props(queue = queue, exchange = exchange, routingKey = name, proc = new Proxy.ProxyServer(realActor), channelParams = channelParams),
+      name = Some("proxy" + queue.name)
     )
 
     Amqp.waitForConnection(system, server).await()

@@ -11,6 +11,7 @@ import org.scalatest.{Matchers, WordSpecLike}
 import org.scalatest.junit.JUnitRunner
 import space.spacelift.amqp.Amqp.{Binding, ChannelParameters, ExchangeParameters, QueueParameters, _}
 import space.spacelift.amqp.{Amqp, ConnectionOwner}
+import space.spacelift.mq.proxy.Proxy
 import space.spacelift.mq.proxy.calculator.Calculator
 import space.spacelift.mq.proxy.calculator.Calculator.{AddRequest, AddResponse}
 import space.spacelift.mq.proxy.serializers.ProtobufSerializer
@@ -36,7 +37,7 @@ class RemoteGpbCallTest extends TestKit(ActorSystem("TestSystem")) with Implicit
       }))
       // create an AMQP proxy server which consumes messages from the "calculator" queue and passes
       // them to our Calculator actor
-      val server = ConnectionOwner.createChildActor(conn, AmqpRpcServer.props(new AmqpProxy.ProxyServer(calc), channelParams = Some(ChannelParameters(qos = 1))))
+      val server = ConnectionOwner.createChildActor(conn, AmqpRpcServer.props(new Proxy.ProxyServer(calc), channelParams = Some(ChannelParameters(qos = 1))))
       Amqp.waitForConnection(system, server).await(5, TimeUnit.SECONDS)
 
       server ! AddBinding(Binding(exchange, queue, "calculator-gpb"))
@@ -45,7 +46,7 @@ class RemoteGpbCallTest extends TestKit(ActorSystem("TestSystem")) with Implicit
       }
       // create an AMQP proxy client in front of the "calculator queue"
       val client = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props(ExchangeParameters("amq.direct", true, "direct"), "calculator-gpb"))
-      val proxy = system.actorOf(Props(new AmqpProxy.ProxyClient(client, ProtobufSerializer)), name = "proxy")
+      val proxy = system.actorOf(Props(new Proxy.ProxyClient(client, ProtobufSerializer)), name = "proxy")
 
       Amqp.waitForConnection(system, client).await(5, TimeUnit.SECONDS)
       implicit val timeout: akka.util.Timeout = 5 seconds
