@@ -20,7 +20,7 @@ object JsonSerializer extends Serializer {
     require(manifest.isDefined)
     val string = new String(bytes)
     implicit val mf = Manifest.classType(manifest.get)
-    Serialization.read(string)
+    Serialization.read(if (string.length == 0) "{}" else string)
   }
 }
 
