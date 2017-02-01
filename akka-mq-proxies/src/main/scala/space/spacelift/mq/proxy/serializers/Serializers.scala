@@ -5,6 +5,7 @@ import akka.serialization.Serializer
 object Serializers {
 
   private val map = Map(
+    "text/plain" -> NoOpSerializer,
     "application/json" -> JsonSerializer,
     "application/x-protobuf" -> ProtobufSerializer,
     "application/x-thrift" -> ThriftSerializer,

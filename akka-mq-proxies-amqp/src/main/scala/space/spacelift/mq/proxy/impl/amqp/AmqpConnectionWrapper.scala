@@ -3,7 +3,7 @@ package space.spacelift.mq.proxy.impl.amqp
 import java.util.UUID
 import javax.inject.Inject
 
-import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.util.Timeout
 import space.spacelift.amqp.Amqp.{ChannelParameters, ExchangeParameters, QueueParameters}
 import space.spacelift.amqp.{Amqp, ConnectionOwner}
@@ -11,7 +11,8 @@ import com.rabbitmq.client.ConnectionFactory
 import com.typesafe.config.Config
 import space.spacelift.mq.proxy.Proxy
 import space.spacelift.mq.proxy.ConnectionWrapper
-import space.spacelift.mq.proxy.patterns.RpcClient
+import space.spacelift.mq.proxy.patterns.{Processor, RpcClient}
+import space.spacelift.mq.proxy.serializers.JsonSerializer
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -115,7 +116,7 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
 
   override def wrapPublisherActorOf(system: ActorSystem, realActor: ActorRef, name: String, timeout: Timeout): ActorRef = ???
 
-  override def wrapRpcClientActorOf(system: ActorSystem, realActor: ActorRef, name: String, timeout: Timeout): ActorRef = {
+  override def wrapRpcClientActorOf(system: ActorSystem, realActor: ActorRef, name: String, timeout: Timeout, clientProxy: (ActorRef => Actor)): ActorRef = {
     val conn = getConnectionOwner(system)
 
     system.log.debug("Creating proxy actor for actor " + realActor)
@@ -125,14 +126,14 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
     // Create client
     val client = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props(exchange, name, queue, channelParams))
 
-    val proxy = system.actorOf(Proxy.ProxyClient.props(client), name = "proxyClient" + name)
+    val proxy = system.actorOf(Props(clientProxy(client)), name = "proxyClient" + name)
 
     Amqp.waitForConnection(system, client).await()
 
     proxy
   }
 
-  override def wrapRpcServerActorOf(system: ActorSystem, realActor: ActorRef, name: String, timeout: Timeout): ActorRef = {
+  override def wrapRpcServerActorOf(system: ActorSystem, realActor: ActorRef, name: String, timeout: Timeout, serverProxy: (ActorRef => Processor)): ActorRef = {
     val conn = getConnectionOwner(system)
 
     println("Creating proxy actor for actor " + realActor)
@@ -141,7 +142,7 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
 
     // Create our wrapped Actor of the original Actor
     val server = ConnectionOwner.createChildActor(conn,
-      AmqpRpcServer.props(queue = queue, exchange = exchange, routingKey = name, proc = new Proxy.ProxyServer(realActor), channelParams = channelParams),
+      AmqpRpcServer.props(queue = queue, exchange = exchange, routingKey = name, proc = serverProxy(realActor), channelParams = channelParams),
       name = Some("proxyServer" + queue.name)
     )
 

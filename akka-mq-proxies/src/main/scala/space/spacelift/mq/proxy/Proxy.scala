@@ -50,7 +50,7 @@ object Proxy {
     *
     * @param message error message
     */
-  protected case class ServerFailure(message: String, throwableAsString: String)
+  case class ServerFailure(message: String, throwableAsString: String)
 
   def serialize(serializer: Serializer, msg: AnyRef): (Array[Byte], MessageProperties) = {
     (serializer.toBinary(msg), MessageProperties(msg.getClass.getName, Serializers.serializerToContentType(serializer)))
@@ -77,7 +77,7 @@ object Proxy {
     def process(delivery: Delivery): Future[ProcessResult] = {
       Try(deserialize(delivery.body, delivery.properties)) match {
         case Success((request, serializer)) => {
-          logger.debug("handling delivery of type %s".format(request.getClass.getName))
+          logger.debug("handling delivery of type %s with serializer %s".format(request.getClass.getName, serializer.getClass.getName))
 
           val future = for {
             response <- (server ? request)(timeout).mapTo[AnyRef]

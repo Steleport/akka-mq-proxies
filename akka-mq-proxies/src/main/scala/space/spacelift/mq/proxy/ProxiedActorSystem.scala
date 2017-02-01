@@ -2,7 +2,9 @@ package space.spacelift.mq.proxy
 
 import javax.inject.{Inject, Singleton}
 
-import akka.actor.{ActorRef, ActorSystem, Props}
+import akka.actor.{Actor, ActorRef, ActorSystem, Props}
+import space.spacelift.mq.proxy.patterns.Processor
+import space.spacelift.mq.proxy.serializers.JsonSerializer
 
 import scala.concurrent.duration._
 import scala.util.Random
@@ -12,16 +14,17 @@ class ProxiedActorSystem @Inject() (proxyConnectionWrapper: ConnectionWrapper) {
   def randomChars = Random.alphanumeric.take(8).mkString
 
   implicit class ProxiedActorOf(system: ActorSystem) {
-    def rpcServerActorOf(props: Props, name: String): ActorRef = {
+    def rpcServerActorOf(props: Props, name: String, serverProxy: (ActorRef => Processor) = new Proxy.ProxyServer(_)): ActorRef = {
       val realActor = system.actorOf(props, s"rpcServer${name}-${randomChars}")
 
-      proxyConnectionWrapper.wrapRpcServerActorOf(system, realActor, name, 5 seconds)
+      proxyConnectionWrapper.wrapRpcServerActorOf(system, realActor, name, 5 seconds, serverProxy)
+
     }
 
-    def rpcClientActorOf(props: Props, name: String): ActorRef = {
+    def rpcClientActorOf(props: Props, name: String, clientProxy: (ActorRef => Actor) = new Proxy.ProxyClient(_, JsonSerializer)): ActorRef = {
       val realActor = system.actorOf(props, s"rpcClient${name}-${randomChars}")
 
-      proxyConnectionWrapper.wrapRpcClientActorOf(system, realActor, name, 5 seconds)
+      proxyConnectionWrapper.wrapRpcClientActorOf(system, realActor, name, 5 seconds, clientProxy)
     }
 
     def publisherActorOf(props: Props, name: String): ActorRef = {
