@@ -11,7 +11,9 @@ import scala.util.Random
 
 @Singleton
 class ProxiedActorSystem @Inject() (proxyConnectionWrapper: ConnectionWrapper) {
-  def randomChars = Random.alphanumeric.take(8).mkString
+  // scalastyle:off magic.number
+  private def randomChars: String = Random.alphanumeric.take(8).mkString
+  // scalastyle:on magic.number
 
   implicit class ProxiedActorOf(system: ActorSystem) {
     def rpcServerActorOf(props: Props, name: String, serverProxy: (ActorRef => Processor) = new Proxy.ProxyServer(_)): ActorRef = {

@@ -1,7 +1,6 @@
 package space.spacelift.mq.proxy.serializers
 
 import akka.serialization.Serializer
-import org.json4s.jackson.Serialization
 
 object NoOpSerializer extends Serializer {
   // scalastyle:off magic.number

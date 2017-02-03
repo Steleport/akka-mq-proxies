@@ -9,10 +9,8 @@ import space.spacelift.amqp.Amqp.{ChannelParameters, ExchangeParameters, QueuePa
 import space.spacelift.amqp.{Amqp, ConnectionOwner}
 import com.rabbitmq.client.ConnectionFactory
 import com.typesafe.config.Config
-import space.spacelift.mq.proxy.Proxy
 import space.spacelift.mq.proxy.ConnectionWrapper
-import space.spacelift.mq.proxy.patterns.{Processor, RpcClient}
-import space.spacelift.mq.proxy.serializers.JsonSerializer
+import space.spacelift.mq.proxy.patterns.Processor
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -29,7 +27,7 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
 
   private var connectionOwner: Option[ActorRef] = None
 
-  def getConnectionOwner(system: ActorSystem) = {
+  private def getConnectionOwner(system: ActorSystem) = {
     if (connectionOwner.isEmpty) {
       connectionOwner = Some(system.actorOf(Props(new ConnectionOwner(connFactory))))
     }
@@ -106,7 +104,12 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
 
     // Create a wrapped connection Actor
     val exchange = extractExchangeParameters(config, name)
-    val queue = QueueParameters(name = queueName + (if (randomizeQueueName) "-" + UUID.randomUUID().toString else ""), passive = isQueuePassive, autodelete = isQueueAutodelete, durable = isQueueDurable)
+    val queue = QueueParameters(
+      name = queueName + (if (randomizeQueueName) "-" + UUID.randomUUID().toString else ""),
+      passive = isQueuePassive,
+      autodelete = isQueueAutodelete,
+      durable = isQueueDurable
+    )
     val channelParams = ChannelParameters(qos = qos, global = isQosGlobal)
 
     (exchange, queue, channelParams)
@@ -133,7 +136,13 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
     proxy
   }
 
-  override def wrapRpcServerActorOf(system: ActorSystem, realActor: ActorRef, name: String, timeout: Timeout, serverProxy: (ActorRef => Processor)): ActorRef = {
+  override def wrapRpcServerActorOf(
+                                     system: ActorSystem,
+                                     realActor: ActorRef,
+                                     name: String,
+                                     timeout: Timeout,
+                                     serverProxy: (ActorRef => Processor)
+                                   ): ActorRef = {
     val conn = getConnectionOwner(system)
 
     println("Creating proxy actor for actor " + realActor)

@@ -14,10 +14,20 @@ import scala.util.{Failure, Success}
 
 object AmqpRpcServer {
 
-  def props(processor: Processor, init: Seq[Request] = Seq.empty[Request], channelParams: Option[ChannelParameters] = None)(implicit ctx: ExecutionContext): Props =
+  def props(
+             processor: Processor,
+             init: Seq[Request] = Seq.empty[Request],
+             channelParams: Option[ChannelParameters] = None
+           )(implicit ctx: ExecutionContext): Props =
     Props(new AmqpRpcServer(processor, init, channelParams))
 
-  def props(queue: QueueParameters, exchange: ExchangeParameters, routingKey: String, proc: Processor, channelParams: ChannelParameters)(implicit ctx: ExecutionContext): Props =
+  def props(
+             queue: QueueParameters,
+             exchange: ExchangeParameters,
+             routingKey: String,
+             proc: Processor,
+             channelParams: ChannelParameters
+           )(implicit ctx: ExecutionContext): Props =
     props(processor = proc, init = List(AddBinding(Binding(exchange, queue, routingKey))), channelParams = Some(channelParams))
 
   def props(queue: QueueParameters, exchange: ExchangeParameters, routingKey: String, proc: Processor)(implicit ctx: ExecutionContext): Props =
@@ -36,11 +46,23 @@ object AmqpRpcServer {
   * @param processor    [[Processor]] implementation
  * @param channelParams optional channel parameters
  */
-class AmqpRpcServer(val processor: Processor, init: Seq[Request] = Seq.empty[Request], channelParams: Option[ChannelParameters] = None)(implicit ctx: ExecutionContext = ExecutionContext.Implicits.global) extends Consumer(listener = None, autoack = false, init = init, channelParams = channelParams) with RpcServer {
+class AmqpRpcServer(
+                     val processor: Processor,
+                     init: Seq[Request] = Seq.empty[Request],
+                     channelParams: Option[ChannelParameters] = None
+                   )(implicit ctx: ExecutionContext = ExecutionContext.Implicits.global)
+  extends Consumer(
+    listener = None,
+    autoack = false,
+    init = init,
+    channelParams = channelParams
+  ) with RpcServer {
   private def sendResponse(result: ProcessResult, properties: BasicProperties, channel: Channel) {
     result match {
+      // scalastyle:off null
       // send a reply only if processor return something *and* replyTo is set
       case ProcessResult(Some(data), customProperties) if (properties.getReplyTo != null) => {
+        // scalastyle:on null
         // publish the response with the same correlation id as the request
         val props = new BasicProperties
           .Builder()

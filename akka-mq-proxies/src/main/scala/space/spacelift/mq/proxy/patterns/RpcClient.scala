@@ -7,7 +7,7 @@ object RpcClient {
   case class Request(publish: List[Delivery], numberOfResponses: Int = 1)
 
   object Request {
-    def apply(publish: Delivery) = new Request(List(publish), 1)
+    def apply(publish: Delivery): Request = new Request(List(publish), 1)
   }
 
   case class Response(deliveries: List[Delivery])

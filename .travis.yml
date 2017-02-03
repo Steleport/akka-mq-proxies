@@ -1,5 +1,5 @@
 language: scala
-script: sbt test
+script: sbt scalastyle test
 scala:
   - 2.12.1
 jdk:

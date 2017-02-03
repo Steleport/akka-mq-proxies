@@ -12,17 +12,34 @@ import space.spacelift.mq.proxy.{Delivery => ProxyDelivery}
 import scala.concurrent.ExecutionContext
 
 object AmqpRpcClient {
-  def props(exchange: ExchangeParameters, routingKey: String, replyQueue: Option[QueueParameters] = None, channelParams: Option[ChannelParameters] = None): Props =
+  def props(
+             exchange: ExchangeParameters,
+             routingKey: String,
+             replyQueue: Option[QueueParameters] = None,
+             channelParams: Option[ChannelParameters] = None
+           ): Props =
     Props(new AmqpRpcClient(exchange, routingKey, true, false, replyQueue, channelParams))
 
-  def props(exchange: ExchangeParameters, routingKey: String, replyQueue: QueueParameters, channelParams: ChannelParameters)(implicit ctx: ExecutionContext): Props =
+  def props(
+             exchange: ExchangeParameters,
+             routingKey: String,
+             replyQueue: QueueParameters,
+             channelParams: ChannelParameters
+           )(implicit ctx: ExecutionContext): Props =
     props(exchange, routingKey, replyQueue = Some(replyQueue), channelParams = Some(channelParams))
 
   def props(exchange: ExchangeParameters, routingKey: String, replyQueue: QueueParameters)(implicit ctx: ExecutionContext): Props =
     props(exchange, routingKey, Some(replyQueue))
 }
 
-class AmqpRpcClient(exchange: ExchangeParameters, routingKey: String, mandatory: Boolean, immediate: Boolean, replyQueue: Option[QueueParameters], channelParams: Option[ChannelParameters] = None) extends ChannelOwner(channelParams = channelParams) with RpcClient {
+class AmqpRpcClient(
+                     exchange: ExchangeParameters,
+                     routingKey: String,
+                     mandatory: Boolean,
+                     immediate: Boolean,
+                     replyQueue: Option[QueueParameters],
+                     channelParams: Option[ChannelParameters] = None
+                   ) extends ChannelOwner(channelParams = channelParams) with RpcClient {
   import RpcClient._
 
   var queue: String = ""
