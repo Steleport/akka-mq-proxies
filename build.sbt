@@ -14,7 +14,6 @@ lazy val akkaMqProxies = (project in file("akka-mq-proxies"))
     libraryDependencies ++= commonDependencies ++ Seq(
       "org.json4s" %% "json4s-jackson" %  "3.5.0",
       "org.json4s" %% "json4s-ext" %  "3.5.0",
-      "com.google.protobuf" % "protobuf-java" % "2.4.1",
       "org.xerial.snappy" % "snappy-java" % "1.0.5.4",
       "org.apache.thrift" % "libthrift" % "0.9.0"
     )

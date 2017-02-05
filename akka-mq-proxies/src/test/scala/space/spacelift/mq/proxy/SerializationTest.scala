@@ -10,6 +10,21 @@ case class Message(a: String, b: Int)
 
 class SerializationTest extends AssertionsForJUnit {
 
+  @Test def verifyNoOpSerialization(): Unit = {
+    val serializer = NoOpSerializer
+    val msg = "Look at me, I'm a string!"
+
+    val (body, props) = Proxy.serialize(serializer, msg)
+
+    assert(new String(body) === msg)
+    assert(props.contentType === "text/plain")
+    assert(props.clazz === "java.lang.String")
+
+    val (deserialized, _) = Proxy.deserialize(body, props)
+
+    assert(deserialized === msg)
+  }
+
   @Test def verifyJsonSerialization() {
 
     val serializer = JsonSerializer
@@ -19,7 +34,7 @@ class SerializationTest extends AssertionsForJUnit {
 
     assert(new String(body) === """{"a":"toto","b":123}""")
     assert(props.contentType === "application/json")
-    assert(props.clazz === "space.spacelift.amqp.proxy.Message")
+    assert(props.clazz === "space.spacelift.mq.proxy.Message")
 
     val (deserialized, _) = Proxy.deserialize(body, props)
 
@@ -34,7 +49,7 @@ class SerializationTest extends AssertionsForJUnit {
     val (body, props) = Proxy.serialize(serializer, msg)
 
     assert(props.contentType === "application/x-snappy-json")
-    assert(props.clazz === "space.spacelift.amqp.proxy.Message")
+    assert(props.clazz === "space.spacelift.mq.proxy.Message")
 
     val (deserialized, _) = Proxy.deserialize(body, props)
 
@@ -49,7 +64,7 @@ class SerializationTest extends AssertionsForJUnit {
     val (body, props) = Proxy.serialize(serializer, msg)
 
     assert(props.contentType === "application/x-protobuf")
-    assert(props.clazz === """space.spacelift.amqp.proxy.gpbtest.Gpbtest$Person""")
+    assert(props.clazz === """space.spacelift.mq.proxy.gpbtest.Gpbtest$Person""")
 
     val (deserialized, _) = Proxy.deserialize(body, props)
 
@@ -64,7 +79,7 @@ class SerializationTest extends AssertionsForJUnit {
     val (body, props) = Proxy.serialize(serializer, msg)
 
     assert(props.contentType === "application/x-snappy-protobuf")
-    assert(props.clazz === """space.spacelift.amqp.proxy.gpbtest.Gpbtest$Person""")
+    assert(props.clazz === """space.spacelift.mq.proxy.gpbtest.Gpbtest$Person""")
 
     val (deserialized, _) = Proxy.deserialize(body, props)
 
@@ -79,7 +94,7 @@ class SerializationTest extends AssertionsForJUnit {
     val (body, props) = Proxy.serialize(serializer, msg)
 
     assert(props.contentType === "application/x-thrift")
-    assert(props.clazz === """space.spacelift.amqp.proxy.thrifttest.Person""")
+    assert(props.clazz === """space.spacelift.mq.proxy.thrifttest.Person""")
 
     val (deserialized, _) = Proxy.deserialize(body, props)
 
@@ -94,7 +109,7 @@ class SerializationTest extends AssertionsForJUnit {
     val (body, props) = Proxy.serialize(serializer, msg)
 
     assert(props.contentType === "application/x-snappy-thrift")
-    assert(props.clazz === """space.spacelift.amqp.proxy.thrifttest.Person""")
+    assert(props.clazz === """space.spacelift.mq.proxy.thrifttest.Person""")
 
     val (deserialized, _) = Proxy.deserialize(body, props)
 
@@ -104,7 +119,7 @@ class SerializationTest extends AssertionsForJUnit {
   @Test def verifDefaultSerialization() {
     val json = """{"a":"toto","b":123}"""
     val msg = Message("toto", 123)
-    val props = MessageProperties("space.spacelift.amqp.proxy.Message", null)
+    val props = MessageProperties("space.spacelift.mq.proxy.Message", null)
     val (deserialized, serializer) = Proxy.deserialize(json.getBytes("UTF-8"), props)
     assert(deserialized === msg)
     assert(serializer === JsonSerializer)
