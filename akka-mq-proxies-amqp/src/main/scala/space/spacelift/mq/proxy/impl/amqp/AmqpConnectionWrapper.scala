@@ -1,13 +1,16 @@
 package space.spacelift.mq.proxy.impl.amqp
 
+import java.io.FileInputStream
+import java.security.KeyStore
 import java.util.UUID
 import javax.inject.Inject
+import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.util.Timeout
 import space.spacelift.amqp.Amqp.{ChannelParameters, ExchangeParameters, QueueParameters}
 import space.spacelift.amqp.{Amqp, ConnectionOwner}
-import com.rabbitmq.client.ConnectionFactory
+import com.rabbitmq.client.{ConnectionFactory, DefaultSaslConfig}
 import com.typesafe.config.Config
 import space.spacelift.mq.proxy.ConnectionWrapper
 import space.spacelift.mq.proxy.patterns.Processor
@@ -24,6 +27,30 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
   connFactory.setUsername(config.getString("spacelift.amqp.username"))
   connFactory.setPassword(config.getString("spacelift.amqp.password"))
   connFactory.setVirtualHost(config.getString("spacelift.amqp.vhost"))
+  if (config.hasPath("spacelift.amqp.ssl")) {
+    connFactory.setSaslConfig(DefaultSaslConfig.EXTERNAL)
+
+    val context = SSLContext.getInstance("TLSv1.1")
+
+    val ks = KeyStore.getInstance("PKCS12")
+    val kmf = KeyManagerFactory.getInstance("SunX509")
+    val tks = KeyStore.getInstance("JKS")
+    val tmf = TrustManagerFactory.getInstance("SunX509")
+    ks.load(
+      new FileInputStream(config.getString("spacelift.amqp.ssl.certificate.path")),
+      config.getString("spacelift.amqp.ssl.certificate.password").toCharArray
+    )
+    kmf.init(ks, config.getString("spacelift.amqp.ssl.certificate.password").toCharArray)
+
+    tks.load(new FileInputStream(config.getString("spacelift.amqp.ssl.cacerts.path")), config.getString("spacelift.amqp.ssl.cacerts.password").toCharArray())
+    tmf.init(tks)
+
+    // scalastyle:off null
+    context.init(kmf.getKeyManagers, tmf.getTrustManagers, null)
+    // scalastyle:on null
+
+    connFactory.useSslProtocol(context)
+  }
 
   private var connectionOwner: Option[ActorRef] = None
 
@@ -115,9 +142,30 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
     (exchange, queue, channelParams)
   }
 
-  override def wrapSubscriberActorOf(system: ActorSystem, realActor: ActorRef, name: String, timeout: Timeout): ActorRef = ???
+  override def wrapSubscriberActorOf(
+                                      system: ActorSystem,
+                                      realActor: ActorRef,
+                                      name: String,
+                                      timeout: Timeout,
+                                      subscriberProxy: (ActorRef => Processor)
+                                    ): ActorRef = ???
 
-  override def wrapPublisherActorOf(system: ActorSystem, realActor: ActorRef, name: String, timeout: Timeout): ActorRef = ???
+  override def wrapPublisherActorOf(system: ActorSystem, realActor: ActorRef, name: String, timeout: Timeout, publisherProxy: (ActorRef => Actor)): ActorRef = {
+    val conn = getConnectionOwner(system)
+
+    system.log.debug("Creating proxy actor for actor " + realActor)
+
+    val (exchange, queue, channelParams) = extractAllParameters(config, name)
+
+    // Create client
+    val client = ConnectionOwner.createChildActor(conn, AmqpPublisher.props(exchange, name, channelParams))
+
+    val proxy = system.actorOf(Props(publisherProxy(client)), name = "proxyPublisher" + name)
+
+    Amqp.waitForConnection(system, client).await()
+
+    proxy
+  }
 
   override def wrapRpcClientActorOf(system: ActorSystem, realActor: ActorRef, name: String, timeout: Timeout, clientProxy: (ActorRef => Actor)): ActorRef = {
     val conn = getConnectionOwner(system)

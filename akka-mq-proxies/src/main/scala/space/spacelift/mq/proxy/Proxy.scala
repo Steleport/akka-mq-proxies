@@ -5,7 +5,7 @@ import akka.serialization.Serializer
 import akka.util.Timeout
 import akka.pattern.{ask, pipe}
 import org.slf4j.LoggerFactory
-import space.spacelift.mq.proxy.patterns.{ProcessResult, Processor, RpcClient}
+import space.spacelift.mq.proxy.patterns.{ProcessResult, Processor, Publisher, RpcClient}
 import space.spacelift.mq.proxy.serializers.{JsonSerializer, Serializers}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -167,7 +167,7 @@ object Proxy {
         val (body, props) = serialize(serializer, msg)
         val publish = Delivery(body, props)
         log.debug("sending %s to %s".format(publish, client))
-        client ! publish
+        client ! Publisher.Publish(publish)
       }
     }
   }

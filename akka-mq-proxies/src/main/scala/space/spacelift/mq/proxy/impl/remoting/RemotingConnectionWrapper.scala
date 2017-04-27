@@ -17,9 +17,27 @@ class RemotingConnectionWrapper @Inject() (config: Config) extends ConnectionWra
                                      serverProxy: (ActorRef) => Processor
                                    ): ActorRef = ???
 
-  override def wrapPublisherActorOf(system: ActorSystem, realActor: ActorRef, name: String, timeout: Timeout): ActorRef = ???
+  override def wrapPublisherActorOf(
+                                     system: ActorSystem,
+                                     realActor: ActorRef,
+                                     name: String,
+                                     timeout: Timeout,
+                                     publisherProxy: (ActorRef => Actor)
+                                   ): ActorRef = ???
 
-  override def wrapRpcClientActorOf(system: ActorSystem, realActor: ActorRef, name: String, timeout: Timeout, clientProxy: (ActorRef) => Actor): ActorRef = ???
+  override def wrapRpcClientActorOf(
+                                     system: ActorSystem,
+                                     realActor: ActorRef,
+                                     name: String,
+                                     timeout: Timeout,
+                                     clientProxy: (ActorRef) => Actor
+                                   ): ActorRef = ???
 
-  override def wrapSubscriberActorOf(system: ActorSystem, realActor: ActorRef, name: String, timeout: Timeout): ActorRef = ???
+  override def wrapSubscriberActorOf(
+                                      system: ActorSystem,
+                                      realActor: ActorRef,
+                                      name: String,
+                                      timeout: Timeout,
+                                      subscriberProxy: (ActorRef => Processor)
+                                    ): ActorRef = ???
 }

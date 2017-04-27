@@ -1,6 +1,5 @@
 import sbt._
 import Keys._
-import sbtprotobuf.{ProtobufPlugin=>PB}
 
 object Commons {
   val appVersion = "2.0.0-SNAPSHOT"
@@ -43,9 +42,5 @@ object Commons {
           <url>http://spacelift.space</url>
         </developer>
       </developers>)
-  ) ++ PB.protobufSettings ++ Seq(
-    sourceDirectory in PB.protobufConfig := (resourceDirectory in Test).value,
-    javaSource in PB.protobufConfig := ((sourceDirectory in Test).value / "java-protobuf"),
-    version in PB.protobufConfig := "2.4.1"
   )
 }
