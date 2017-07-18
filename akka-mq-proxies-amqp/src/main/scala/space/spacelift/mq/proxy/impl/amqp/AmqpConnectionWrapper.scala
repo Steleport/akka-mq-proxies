@@ -2,6 +2,7 @@ package space.spacelift.mq.proxy.impl.amqp
 
 import java.io.FileInputStream
 import java.security.KeyStore
+import java.util.Map.Entry
 import java.util.UUID
 import javax.inject.Inject
 import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
@@ -11,7 +12,9 @@ import akka.util.Timeout
 import space.spacelift.amqp.Amqp.{ChannelParameters, ExchangeParameters, QueueParameters}
 import space.spacelift.amqp.{Amqp, ConnectionOwner}
 import com.rabbitmq.client.{ConnectionFactory, DefaultSaslConfig}
-import com.typesafe.config.Config
+import com.typesafe.config.{Config, ConfigObject, ConfigValue}
+
+import scala.collection.JavaConverters._
 import space.spacelift.mq.proxy.ConnectionWrapper
 import space.spacelift.mq.proxy.patterns.Processor
 
@@ -22,6 +25,18 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
 
   if (config.hasPath("spacelift.amqp.useLegacySerializerEncodingSwap") && config.getBoolean("spacelift.amqp.useLegacySerializerEncodingSwap")) {
     space.spacelift.mq.proxy.Proxy.useLegacySerializerEncodingSwap = true
+  }
+
+  if (config.hasPath("spacelift.amqp.namespaceMappings")) {
+    val list : Iterable[ConfigObject] = config.getObjectList("spacelift.amqp.namespaceMappings").asScala
+    val map = (for {
+      item : ConfigObject <- list
+      entry : Entry[String, ConfigValue] <- item.entrySet().asScala
+      key = entry.getKey
+      value = entry.getValue.unwrapped().toString
+    } yield (key, value)).toMap
+
+    space.spacelift.mq.proxy.Proxy.namespaceMapping = map
   }
 
   connFactory.setAutomaticRecoveryEnabled(true)

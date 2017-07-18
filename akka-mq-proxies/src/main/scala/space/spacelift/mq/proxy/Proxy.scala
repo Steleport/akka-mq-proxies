@@ -51,6 +51,8 @@ object Proxy {
     */
   var useLegacySerializerEncodingSwap = false
 
+  var namespaceMapping: Map[String, String] = Map()
+
   /**
     * "server" side failure, that will be serialized and sent back to the client proxy
     *
@@ -61,9 +63,19 @@ object Proxy {
   def serialize(serializer: Serializer, msg: AnyRef): (Array[Byte], MessageProperties) = {
     (serializer.toBinary(msg),
       if (useLegacySerializerEncodingSwap) {
-        MessageProperties(Serializers.serializerToContentType(serializer), msg.getClass.getName)
+        MessageProperties(
+          Serializers.serializerToContentType(serializer),
+          msg.getClass.getName.split('.').toList.reverse match {
+            case x :: xs => namespaceMapping.getOrElse(xs.reverse.mkString("."), xs.reverse.mkString(".")) + s".${x}"
+          }
+        )
       } else {
-        MessageProperties(msg.getClass.getName, Serializers.serializerToContentType(serializer))
+        MessageProperties(
+          msg.getClass.getName.split('.').toList.reverse match {
+            case x :: xs => namespaceMapping.getOrElse(xs.reverse.mkString("."), xs.reverse.mkString(".")) + s".${x}"
+          },
+          Serializers.serializerToContentType(serializer)
+        )
       })
   }
 
@@ -77,7 +89,11 @@ object Proxy {
     }
     // scalastyle:on null
 
-    (serializer.fromBinary(body, Some(Class.forName(if (useLegacySerializerEncodingSwap) { props.contentType } else { props.clazz }))), serializer)
+    (serializer.fromBinary(body, Some(Class.forName(
+      (if (useLegacySerializerEncodingSwap) { props.contentType } else { props.clazz }).split('.').toList.reverse match {
+        case x :: xs => namespaceMapping.map(_.swap).getOrElse(xs.reverse.mkString("."), xs.reverse.mkString(".")) + s".${x}"
+      }
+    ))), serializer)
   }
 
   class ProxyServer(server: ActorRef, timeout: Timeout = 30 seconds) extends Processor {
