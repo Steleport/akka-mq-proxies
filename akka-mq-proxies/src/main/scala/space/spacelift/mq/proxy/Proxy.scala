@@ -46,6 +46,12 @@ case class Delivery(body: Array[Byte], properties: MessageProperties)
 
 object Proxy {
   /**
+    * In pre-2.0, the contentType had the name of the class, and contentEncoding had the name of the content type. Don't
+    * enable this unless you know you need it.
+    */
+  var useLegacySerializerEncodingSwap = false
+
+  /**
     * "server" side failure, that will be serialized and sent back to the client proxy
     *
     * @param message error message
@@ -53,19 +59,25 @@ object Proxy {
   case class ServerFailure(message: String, throwableAsString: String)
 
   def serialize(serializer: Serializer, msg: AnyRef): (Array[Byte], MessageProperties) = {
-    (serializer.toBinary(msg), MessageProperties(msg.getClass.getName, Serializers.serializerToContentType(serializer)))
+    (serializer.toBinary(msg),
+      if (useLegacySerializerEncodingSwap) {
+        MessageProperties(Serializers.serializerToContentType(serializer), msg.getClass.getName)
+      } else {
+        MessageProperties(msg.getClass.getName, Serializers.serializerToContentType(serializer))
+      })
   }
 
   def deserialize(body: Array[Byte], props: MessageProperties): (AnyRef, Serializer) = {
     // scalastyle:off null
     require(props.clazz != null && props.clazz != "", "Class is not specified")
-    val serializer = props.contentType match {
+
+    val serializer = (if (useLegacySerializerEncodingSwap) { props.clazz } else { props.contentType }) match {
       case "" | null => JsonSerializer // use JSON if not serialization format was specified
       case contentType => Serializers.contentTypeToSerializer(contentType)
     }
     // scalastyle:on null
 
-    (serializer.fromBinary(body, Some(Class.forName(props.clazz))), serializer)
+    (serializer.fromBinary(body, Some(Class.forName(if (useLegacySerializerEncodingSwap) { props.contentType } else { props.clazz }))), serializer)
   }
 
   class ProxyServer(server: ActorRef, timeout: Timeout = 30 seconds) extends Processor {
@@ -98,7 +110,13 @@ object Proxy {
     }
 
     def onFailure(delivery: Delivery, e: Throwable): ProcessResult = {
-      val (body, props) = serialize(Serializers.contentTypeToSerializer(delivery.properties.contentType), ServerFailure(e.getMessage, e.toString))
+      val (body, props) = serialize(Serializers.contentTypeToSerializer(
+        if (useLegacySerializerEncodingSwap) {
+          delivery.properties.clazz
+        } else {
+          delivery.properties.contentType
+        }
+      ), ServerFailure(e.getMessage, e.toString))
       ProcessResult(Some(body), Some(props))
     }
   }

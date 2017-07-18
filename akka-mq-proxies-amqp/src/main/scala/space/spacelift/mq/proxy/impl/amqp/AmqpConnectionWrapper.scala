@@ -20,6 +20,10 @@ import scala.concurrent.ExecutionContext.Implicits.global
 class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper {
   private val connFactory = new ConnectionFactory()
 
+  if (config.hasPath("spacelift.amqp.useLegacySerializerEncodingSwap") && config.getBoolean("spacelift.amqp.useLegacySerializerEncodingSwap")) {
+    space.spacelift.mq.proxy.Proxy.useLegacySerializerEncodingSwap = true
+  }
+
   connFactory.setAutomaticRecoveryEnabled(true)
   connFactory.setTopologyRecoveryEnabled(false)
   connFactory.setHost(config.getString("spacelift.amqp.host"))
@@ -27,6 +31,7 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
   connFactory.setUsername(config.getString("spacelift.amqp.username"))
   connFactory.setPassword(config.getString("spacelift.amqp.password"))
   connFactory.setVirtualHost(config.getString("spacelift.amqp.vhost"))
+
   if (config.hasPath("spacelift.amqp.ssl")) {
     connFactory.setSaslConfig(DefaultSaslConfig.EXTERNAL)
 
