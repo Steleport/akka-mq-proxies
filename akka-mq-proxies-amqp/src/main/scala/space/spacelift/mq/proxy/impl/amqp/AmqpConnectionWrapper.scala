@@ -168,7 +168,23 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
                                       name: String,
                                       timeout: Timeout,
                                       subscriberProxy: (ActorRef => Processor)
-                                    ): ActorRef = ???
+                                    ): ActorRef = {
+    val conn = getConnectionOwner(system)
+
+    println("Creating proxy actor for actor " + realActor)
+
+    val (exchange, queue, channelParams) = extractAllParameters(config, name)
+
+    // Create our wrapped Actor of the original Actor
+    val server = ConnectionOwner.createChildActor(conn,
+      AmqpSubscriber.props(queue = queue, exchange = exchange, routingKey = name, proc = subscriberProxy(realActor), channelParams = channelParams),
+      name = Some("proxySubscriber" + queue.name)
+    )
+
+    Amqp.waitForConnection(system, server).await()
+
+    server
+  }
 
   override def wrapPublisherActorOf(system: ActorSystem, realActor: ActorRef, name: String, timeout: Timeout, publisherProxy: (ActorRef => Actor)): ActorRef = {
     val conn = getConnectionOwner(system)

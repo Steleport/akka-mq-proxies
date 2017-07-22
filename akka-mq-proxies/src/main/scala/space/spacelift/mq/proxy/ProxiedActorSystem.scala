@@ -34,7 +34,7 @@ class ProxiedActorSystem @Inject() (proxyConnectionWrapper: ConnectionWrapper) {
       proxyConnectionWrapper.wrapPublisherActorOf(system, realActor, name, 5 seconds, publisherProxy)
     }
 
-    def subscriberActorOf(props: Props, name: String, subscriberProxy: (ActorRef => Processor)): ActorRef = {
+    def subscriberActorOf(props: Props, name: String, subscriberProxy: (ActorRef => Processor) = new Proxy.ProxySubscriber(_)): ActorRef = {
       val realActor = system.actorOf(props, s"subscriber${name}-${randomChars}")
 
       proxyConnectionWrapper.wrapSubscriberActorOf(system, realActor, name, 5 seconds, subscriberProxy)

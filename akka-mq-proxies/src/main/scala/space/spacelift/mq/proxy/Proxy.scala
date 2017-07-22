@@ -137,6 +137,39 @@ object Proxy {
     }
   }
 
+  class ProxySubscriber(subscriber: ActorRef, timeout: Timeout = 30 seconds) extends Processor {
+    import ExecutionContext.Implicits.global
+
+    lazy val logger = LoggerFactory.getLogger(classOf[ProxyServer])
+
+    def process(delivery: Delivery): Future[ProcessResult] = {
+      Try(deserialize(delivery.body, delivery.properties)) match {
+        case Success((request, serializer)) => {
+          logger.debug("handling delivery of type %s with serializer %s".format(request.getClass.getName, serializer.getClass.getName))
+
+          subscriber ! request
+
+          Future { ProcessResult(None, None) }
+        }
+        case Failure(cause) => {
+          logger.error("deserialization failed", cause)
+          Future.failed(cause)
+        }
+      }
+    }
+
+    def onFailure(delivery: Delivery, e: Throwable): ProcessResult = {
+      val (body, props) = serialize(Serializers.contentTypeToSerializer(
+        if (useLegacySerializerEncodingSwap) {
+          delivery.properties.clazz
+        } else {
+          delivery.properties.contentType
+        }
+      ), ServerFailure(e.getMessage, e.toString))
+      ProcessResult(Some(body), Some(props))
+    }
+  }
+
   object ProxyClient {
     /**
       * Defines a ProxyClient with a default serializer
