@@ -19,9 +19,14 @@ import space.spacelift.mq.proxy.ConnectionWrapper
 import space.spacelift.mq.proxy.patterns.Processor
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.Random
 
 class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper {
   private val connFactory = new ConnectionFactory()
+
+  // scalastyle:off magic.number
+  private def randomChars: String = Random.alphanumeric.take(8).mkString
+  // scalastyle:on magic.number
 
   if (config.hasPath("spacelift.amqp.useLegacySerializerEncodingSwap") && config.getBoolean("spacelift.amqp.useLegacySerializerEncodingSwap")) {
     space.spacelift.mq.proxy.Proxy.useLegacySerializerEncodingSwap = true
@@ -113,7 +118,13 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
       }
     }
 
-    ExchangeParameters(name = name, passive = isExchangePassive, exchangeType = exchangeType, durable = isExchangeDurable, autodelete = isExchangeAutodelete)
+    ExchangeParameters(
+      name = exchangeName,
+      passive = isExchangePassive,
+      exchangeType = exchangeType,
+      durable = isExchangeDurable,
+      autodelete = isExchangeAutodelete
+    )
   }
 
   def extractAllParameters(config: Config, name: String): (ExchangeParameters, QueueParameters, ChannelParameters) = {
@@ -178,7 +189,7 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
     // Create our wrapped Actor of the original Actor
     val server = ConnectionOwner.createChildActor(conn,
       AmqpSubscriber.props(queue = queue, exchange = exchange, routingKey = name, proc = subscriberProxy(realActor), channelParams = channelParams),
-      name = Some("proxySubscriber" + queue.name)
+      name = Some(s"proxySubscriber${queue.name}-${randomChars}")
     )
 
     Amqp.waitForConnection(system, server).await()
@@ -196,7 +207,7 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
     // Create client
     val client = ConnectionOwner.createChildActor(conn, AmqpPublisher.props(exchange, name, channelParams))
 
-    val proxy = system.actorOf(Props(publisherProxy(client)), name = "proxyPublisher" + name)
+    val proxy = system.actorOf(Props(publisherProxy(client)), name = s"proxyPublisher${name}-${randomChars}")
 
     Amqp.waitForConnection(system, client).await()
 
@@ -213,7 +224,7 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
     // Create client
     val client = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props(exchange, name, queue, channelParams))
 
-    val proxy = system.actorOf(Props(clientProxy(client)), name = "proxyClient" + name)
+    val proxy = system.actorOf(Props(clientProxy(client)), name = s"proxyClient${name}-${randomChars}")
 
     Amqp.waitForConnection(system, client).await()
 
@@ -236,7 +247,7 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
     // Create our wrapped Actor of the original Actor
     val server = ConnectionOwner.createChildActor(conn,
       AmqpRpcServer.props(queue = queue, exchange = exchange, routingKey = name, proc = serverProxy(realActor), channelParams = channelParams),
-      name = Some("proxyServer" + queue.name)
+      name = Some(s"proxyServer${queue.name}-${randomChars}")
     )
 
     Amqp.waitForConnection(system, server).await()

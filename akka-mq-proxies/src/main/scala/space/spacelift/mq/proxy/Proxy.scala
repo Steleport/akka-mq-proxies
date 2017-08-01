@@ -53,6 +53,8 @@ object Proxy {
 
   var namespaceMapping: Map[String, String] = Map()
 
+  var classLoader: Option[ClassLoader] = None
+
   /**
     * "server" side failure, that will be serialized and sent back to the client proxy
     *
@@ -89,11 +91,15 @@ object Proxy {
     }
     // scalastyle:on null
 
-    (serializer.fromBinary(body, Some(Class.forName(
-      (if (useLegacySerializerEncodingSwap) { props.contentType } else { props.clazz }).split('.').toList.reverse match {
-        case x :: xs => namespaceMapping.map(_.swap).getOrElse(xs.reverse.mkString("."), xs.reverse.mkString(".")) + s".${x}"
-      }
-    ))), serializer)
+    val name = (if (useLegacySerializerEncodingSwap) { props.contentType } else { props.clazz }).split('.').toList.reverse match {
+      case x :: xs => namespaceMapping.map(_.swap).getOrElse(xs.reverse.mkString("."), xs.reverse.mkString(".")) + s".${x}"
+    }
+
+    (serializer.fromBinary(body, Some(if (classLoader.isDefined) {
+      Class.forName(name, true, classLoader.get)
+    } else {
+      Class.forName(name)
+    })), serializer)
   }
 
   class ProxyServer(server: ActorRef, timeout: Timeout = 30 seconds) extends Processor {
