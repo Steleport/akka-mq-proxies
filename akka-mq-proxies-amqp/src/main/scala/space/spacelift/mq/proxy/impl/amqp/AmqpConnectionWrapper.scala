@@ -81,7 +81,14 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
 
   private def getConnectionOwner(system: ActorSystem) = {
     if (connectionOwner.isEmpty) {
-      connectionOwner = Some(system.actorOf(Props(new ConnectionOwner(connFactory))))
+      connectionOwner = Some(
+        system.actorOf(
+          Props(
+            new ConnectionOwner(connFactory)
+          ),
+          s"connectionOwner-${connFactory.getVirtualHost.replace("/", "-")}-${randomChars}"
+        )
+      )
     }
 
     connectionOwner.get
@@ -127,7 +134,7 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
     )
   }
 
-  def extractAllParameters(config: Config, name: String): (ExchangeParameters, QueueParameters, ChannelParameters) = {
+  def extractAllParameters(config: Config, name: String): (ExchangeParameters, QueueParameters, ChannelParameters, String) = {
     var queueName = name
     var randomizeQueueName = true
     var isQueuePassive = false
@@ -135,6 +142,7 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
     var isQueueDurable = true
     var qos = 1
     var isQosGlobal = false
+    var routingKey = name
 
     if (config.hasPath(s"spacelift.proxies.${name}")) {
       if (config.hasPath(s"spacelift.proxies.${name}.queue.name")) {
@@ -158,6 +166,9 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
       if (config.hasPath(s"spacelift.proxies.${name}.channel.global")) {
         isQosGlobal = config.getBoolean(s"spacelift.proxies.${name}.channel.global")
       }
+      if (config.hasPath(s"spacelift.proxies.${name}.queue.routingKey")) {
+        routingKey = config.getString(s"spacelift.proxies.${name}.queue.routingKey")
+      }
     }
 
     // Create a wrapped connection Actor
@@ -170,7 +181,7 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
     )
     val channelParams = ChannelParameters(qos = qos, global = isQosGlobal)
 
-    (exchange, queue, channelParams)
+    (exchange, queue, channelParams, routingKey)
   }
 
   override def wrapSubscriberActorOf(
@@ -182,13 +193,13 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
                                     ): ActorRef = {
     val conn = getConnectionOwner(system)
 
-    println("Creating proxy actor for actor " + realActor)
+    system.log.debug("Creating proxy actor for actor " + realActor)
 
-    val (exchange, queue, channelParams) = extractAllParameters(config, name)
+    val (exchange, queue, channelParams, routingKey) = extractAllParameters(config, name)
 
     // Create our wrapped Actor of the original Actor
     val server = ConnectionOwner.createChildActor(conn,
-      AmqpSubscriber.props(queue = queue, exchange = exchange, routingKey = name, proc = subscriberProxy(realActor), channelParams = channelParams),
+      AmqpSubscriber.props(queue = queue, exchange = exchange, routingKey = routingKey, proc = subscriberProxy(realActor), channelParams = channelParams),
       name = Some(s"proxySubscriber${queue.name}-${randomChars}")
     )
 
@@ -202,10 +213,10 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
 
     system.log.debug("Creating proxy actor for actor " + realActor)
 
-    val (exchange, queue, channelParams) = extractAllParameters(config, name)
+    val (exchange, queue, channelParams, routingKey) = extractAllParameters(config, name)
 
     // Create client
-    val client = ConnectionOwner.createChildActor(conn, AmqpPublisher.props(exchange, name, channelParams))
+    val client = ConnectionOwner.createChildActor(conn, AmqpPublisher.props(exchange, routingKey, channelParams), name = Some(s"connectionPublisher${name}-${randomChars}"))
 
     val proxy = system.actorOf(Props(publisherProxy(client)), name = s"proxyPublisher${name}-${randomChars}")
 
@@ -219,10 +230,10 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
 
     system.log.debug("Creating proxy actor for actor " + realActor)
 
-    val (exchange, queue, channelParams) = extractAllParameters(config, name)
+    val (exchange, queue, channelParams, routingKey) = extractAllParameters(config, name)
 
     // Create client
-    val client = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props(exchange, name, queue, channelParams))
+    val client = ConnectionOwner.createChildActor(conn, AmqpRpcClient.props(exchange, routingKey, queue, channelParams), name = Some(s"connectionClient${name}-${randomChars}"))
 
     val proxy = system.actorOf(Props(clientProxy(client)), name = s"proxyClient${name}-${randomChars}")
 
@@ -240,13 +251,13 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
                                    ): ActorRef = {
     val conn = getConnectionOwner(system)
 
-    println("Creating proxy actor for actor " + realActor)
+    system.log.debug("Creating proxy actor for actor " + realActor)
 
-    val (exchange, queue, channelParams) = extractAllParameters(config, name)
+    val (exchange, queue, channelParams, routingKey) = extractAllParameters(config, name)
 
     // Create our wrapped Actor of the original Actor
     val server = ConnectionOwner.createChildActor(conn,
-      AmqpRpcServer.props(queue = queue, exchange = exchange, routingKey = name, proc = serverProxy(realActor), channelParams = channelParams),
+      AmqpRpcServer.props(queue = queue, exchange = exchange, routingKey = routingKey, proc = serverProxy(realActor), channelParams = channelParams),
       name = Some(s"proxyServer${queue.name}-${randomChars}")
     )
 
