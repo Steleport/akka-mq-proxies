@@ -10,7 +10,7 @@ import javax.net.ssl.{KeyManagerFactory, SSLContext, TrustManagerFactory}
 import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.util.Timeout
 import space.spacelift.amqp.Amqp.{ChannelParameters, ExchangeParameters, QueueParameters}
-import space.spacelift.amqp.{Amqp, ConnectionOwner}
+import space.spacelift.amqp.{Amqp, ConnectionOwner, RabbitMQExtensions}
 import com.rabbitmq.client.{ConnectionFactory, DefaultSaslConfig}
 import com.typesafe.config.{Config, ConfigObject, ConfigValue}
 
@@ -18,11 +18,12 @@ import scala.collection.JavaConverters._
 import space.spacelift.mq.proxy.ConnectionWrapper
 import space.spacelift.mq.proxy.patterns.Processor
 
+import scala.collection.concurrent.TrieMap
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Random
 
 class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper {
-  private val connFactory = new ConnectionFactory()
+  private val defaultConnFactory = new ConnectionFactory()
 
   // scalastyle:off magic.number
   private def randomChars: String = Random.alphanumeric.take(8).mkString
@@ -44,16 +45,16 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
     space.spacelift.mq.proxy.Proxy.namespaceMapping = map
   }
 
-  connFactory.setAutomaticRecoveryEnabled(true)
-  connFactory.setTopologyRecoveryEnabled(false)
-  connFactory.setHost(config.getString("spacelift.amqp.host"))
-  connFactory.setPort(config.getInt("spacelift.amqp.port"))
-  connFactory.setUsername(config.getString("spacelift.amqp.username"))
-  connFactory.setPassword(config.getString("spacelift.amqp.password"))
-  connFactory.setVirtualHost(config.getString("spacelift.amqp.vhost"))
+  defaultConnFactory.setAutomaticRecoveryEnabled(true)
+  defaultConnFactory.setTopologyRecoveryEnabled(false)
+  defaultConnFactory.setHost(config.getString("spacelift.amqp.host"))
+  defaultConnFactory.setPort(config.getInt("spacelift.amqp.port"))
+  defaultConnFactory.setUsername(config.getString("spacelift.amqp.username"))
+  defaultConnFactory.setPassword(config.getString("spacelift.amqp.password"))
+  defaultConnFactory.setVirtualHost(config.getString("spacelift.amqp.vhost"))
 
   if (config.hasPath("spacelift.amqp.ssl")) {
-    connFactory.setSaslConfig(DefaultSaslConfig.EXTERNAL)
+    defaultConnFactory.setSaslConfig(DefaultSaslConfig.EXTERNAL)
 
     val context = SSLContext.getInstance("TLSv1.1")
 
@@ -74,24 +75,93 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
     context.init(kmf.getKeyManagers, tmf.getTrustManagers, null)
     // scalastyle:on null
 
-    connFactory.useSslProtocol(context)
+    defaultConnFactory.useSslProtocol(context)
   }
 
   private var connectionOwner: Option[ActorRef] = None
+  private var federatedConnectionOwners = new TrieMap[String, ActorRef]()
 
-  private def getConnectionOwner(system: ActorSystem) = {
+  private def getConnectionOwner(system: ActorSystem, name: String) = {
     if (connectionOwner.isEmpty) {
       connectionOwner = Some(
         system.actorOf(
           Props(
-            new ConnectionOwner(connFactory)
+            new ConnectionOwner(defaultConnFactory)
           ),
-          s"connectionOwner-${connFactory.getVirtualHost.replace("/", "-")}-${randomChars}"
+          s"connectionOwner-${defaultConnFactory.getVirtualHost.replace("/", "-")}-${randomChars}"
         )
       )
     }
 
-    connectionOwner.get
+    if (config.hasPath(s"spacelift.proxies.${name}.federation")) {
+      var upstreamURI = ""
+      var downstreamHost = ""
+      var downstreamUser = ""
+      var downstreamPass = ""
+      var upstreamName = ""
+
+      //upstreamURI: String, downstreamHost: String, downstreamUser: String, downstreamPass: String, upstreamName: String, vhost: String, pattern: String
+      if (config.hasPath(s"spacelift.proxies.${name}.federation.upstream.uri")) {
+        upstreamURI = config.getString(s"spacelift.proxies.${name}.federation.upstream.uri")
+      }
+      if (config.hasPath(s"spacelift.proxies.${name}.federation.upstream.name")) {
+        upstreamName = config.getString(s"spacelift.proxies.${name}.federation.upstream.name")
+      }
+      if (config.hasPath(s"spacelift.proxies.${name}.federation.downstream.host")) {
+        downstreamHost = config.getString(s"spacelift.proxies.${name}.federation.downstream.host")
+      }
+      if (config.hasPath(s"spacelift.proxies.${name}.federation.downstream.user")) {
+        downstreamUser = config.getString(s"spacelift.proxies.${name}.federation.downstream.user")
+      }
+      if (config.hasPath(s"spacelift.proxies.${name}.federation.downstream.pass")) {
+        downstreamPass = config.getString(s"spacelift.proxies.${name}.federation.downstream.pass")
+      }
+
+      RabbitMQExtensions.federateExchange(upstreamURI, downstreamHost, downstreamUser, downstreamPass, upstreamName, defaultConnFactory.getVirtualHost, s"^${name}$$")
+
+      if (!federatedConnectionOwners.contains(upstreamURI)) {
+        val federatedConnFactory = new ConnectionFactory()
+
+        federatedConnFactory.setAutomaticRecoveryEnabled(true)
+        federatedConnFactory.setTopologyRecoveryEnabled(false)
+        federatedConnFactory.setHost(config.getString(s"spacelift.amqp.federation.${name}.host"))
+        federatedConnFactory.setPort(config.getInt(s"spacelift.amqp.federation.${name}.port"))
+        federatedConnFactory.setUsername(config.getString(s"spacelift.amqp.federation.${name}.username"))
+        federatedConnFactory.setPassword(config.getString(s"spacelift.amqp.federation.${name}.password"))
+        federatedConnFactory.setVirtualHost(config.getString(s"spacelift.amqp.federation.${name}.vhost"))
+
+        if (config.hasPath(s"spacelift.amqp.federation.${name}.ssl")) {
+          federatedConnFactory.setSaslConfig(DefaultSaslConfig.EXTERNAL)
+
+          val context = SSLContext.getInstance("TLSv1.1")
+
+          val ks = KeyStore.getInstance("PKCS12")
+          val kmf = KeyManagerFactory.getInstance("SunX509")
+          val tks = KeyStore.getInstance("JKS")
+          val tmf = TrustManagerFactory.getInstance("SunX509")
+          ks.load(
+            new FileInputStream(config.getString(s"spacelift.amqp.federation.${name}.ssl.certificate.path")),
+            config.getString(s"spacelift.amqp.federation.${name}.ssl.certificate.password").toCharArray
+          )
+          kmf.init(ks, config.getString(s"spacelift.amqp.federation.${name}.ssl.certificate.password").toCharArray)
+
+          tks.load(new FileInputStream(config.getString(s"spacelift.amqp.federation.${name}.ssl.cacerts.path")), config.getString(s"spacelift.amqp.federation.${name}.ssl.cacerts.password").toCharArray())
+          tmf.init(tks)
+
+          // scalastyle:off null
+          context.init(kmf.getKeyManagers, tmf.getTrustManagers, null)
+          // scalastyle:on null
+
+          federatedConnFactory.useSslProtocol(context)
+        }
+
+        federatedConnectionOwners.put(upstreamURI, system.actorOf(Props(new ConnectionOwner(federatedConnFactory)), s"connectionOwner-${name}-${randomChars}"))
+      }
+
+      federatedConnectionOwners(upstreamURI)
+    } else {
+      connectionOwner.get
+    }
   }
 
   def extractExchangeParameters(config: Config, name: String): ExchangeParameters = {
@@ -191,7 +261,7 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
                                       timeout: Timeout,
                                       subscriberProxy: (ActorRef => Processor)
                                     ): ActorRef = {
-    val conn = getConnectionOwner(system)
+    val conn = getConnectionOwner(system, name)
 
     system.log.debug("Creating proxy actor for actor " + realActor)
 
@@ -209,7 +279,7 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
   }
 
   override def wrapPublisherActorOf(system: ActorSystem, realActor: ActorRef, name: String, timeout: Timeout, publisherProxy: (ActorRef => Actor)): ActorRef = {
-    val conn = getConnectionOwner(system)
+    val conn = getConnectionOwner(system, name)
 
     system.log.debug("Creating proxy actor for actor " + realActor)
 
@@ -226,7 +296,7 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
   }
 
   override def wrapRpcClientActorOf(system: ActorSystem, realActor: ActorRef, name: String, timeout: Timeout, clientProxy: (ActorRef => Actor)): ActorRef = {
-    val conn = getConnectionOwner(system)
+    val conn = getConnectionOwner(system, name)
 
     system.log.debug("Creating proxy actor for actor " + realActor)
 
@@ -249,7 +319,7 @@ class AmqpConnectionWrapper @Inject() (config: Config) extends ConnectionWrapper
                                      timeout: Timeout,
                                      serverProxy: (ActorRef => Processor)
                                    ): ActorRef = {
-    val conn = getConnectionOwner(system)
+    val conn = getConnectionOwner(system, name)
 
     system.log.debug("Creating proxy actor for actor " + realActor)
 

@@ -28,7 +28,7 @@ lazy val akkaMqProxiesAmqp = (project in file("akka-mq-proxies-amqp"))
     scalaVersion := "2.12.1",
     name := "akka-mq-proxies-amqp",
     libraryDependencies ++= commonDependencies ++ Seq(
-      "space.spacelift" %% "amqp-scala-client" % "2.0.1-SNAPSHOT"
+      "space.spacelift" %% "amqp-scala-client" % "2.1.0-SNAPSHOT"
     )
   )
   .dependsOn(akkaMqProxies % "compile->compile;test->test")

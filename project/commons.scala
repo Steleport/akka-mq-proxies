@@ -2,7 +2,7 @@ import sbt._
 import Keys._
 
 object Commons {
-  val appVersion = "2.0.0-SNAPSHOT"
+  val appVersion = "2.1.0-SNAPSHOT"
 
   val appOrganization = "space.spacelift"
 
